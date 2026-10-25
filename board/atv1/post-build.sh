@@ -2,9 +2,10 @@
 # Runs with TARGET_DIR populated, before the rootfs image is built.
 set -eu
 
-# ExFAT safety net: the external tree may live on a volume that cannot
-# store exec bits (this project's tree lives on /Volumes exFAT). Make
-# every shell script in the overlay executable regardless.
+# Exec-bit safety net: the tree lives on APFS now and stores modes
+# properly, but copies (Finder, zip, an ExFAT detour) can strip them,
+# and an init script without +x fails silently at boot. Make every
+# overlay script executable regardless.
 [ -f "$TARGET_DIR/etc/atv1/startkodi.sh" ] && chmod 0755 "$TARGET_DIR/etc/atv1/startkodi.sh"
 [ -f "$TARGET_DIR/etc/init.d/S20datadirs" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S20datadirs"
 

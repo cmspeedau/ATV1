@@ -1,0 +1,18 @@
+# Era-matched Buildroot host for the ATV1 tree (README §2).
+# debian:stretch ships gcc 6 / python 2.7 — the generation of toolchain
+# 2017.08-era Buildroot expects. Stretch is fully archived (LTS ended
+# 2025-06), hence the sources repoint before any apt call.
+FROM debian:stretch
+
+RUN printf 'deb http://archive.debian.org/debian stretch main\ndeb http://archive.debian.org/debian-security stretch/updates main\n' > /etc/apt/sources.list \
+ && apt-get update -o Acquire::Check-Valid-Until=false \
+ && apt-get install -y --no-install-recommends \
+      build-essential git cpio rsync file bc wget curl \
+      python perl unzip bzip2 xz-utils \
+      bison flex sed gawk diffstat \
+      libncurses-dev libssl-dev libelf-dev \
+      ca-certificates openssh-client \
+ && apt-get clean \ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root
+CMD ["bash"]

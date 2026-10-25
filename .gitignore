@@ -4,4 +4,9 @@ dl/
 images/
 *.img
 linux-backup/
+
+# macOS/ExFAT junk — must never enter the tree or a rootfs overlay copy
+._*
+.AppleDouble
+.LSOverride
 .DS_Store

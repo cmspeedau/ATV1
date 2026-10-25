@@ -46,7 +46,8 @@ apt-get update && apt-get install -y --no-install-recommends \
   build-essential git cpio rsync file bc wget python perl unzip \
   bison flex sed libncurses-dev libssl-dev ca-certificates
 
-cp -a /extdata/Projects/ATV1 /root/atv1                 # off ExFAT
+# copy the tree off ExFAT — exclude AppleDouble junk that ExFAT carries
+rsync -a --exclude='._*' --exclude='.DS_Store' /extdata/Projects/ATV1/ /root/atv1/
 git clone --depth 1 --branch 2017.08.x \
   https://git.buildroot.net/buildroot /root/buildroot
 

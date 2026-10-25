@@ -11,8 +11,8 @@ config BR2_PACKAGE_ATV1_CLIENT
 
 	    $(BR2_EXTERNAL_ATV1_PATH)/client/atv1-client
 
-  post-build.sh installs it there when this option is enabled.
-  Startup model (headless agent vs tty1 kiosk replacing
-  startkodi.sh) is an open ARCHITECTURE decision (§8) — until
-  it is made, startkodi.sh keeps the kiosk and the client runs
-  as a managed service only.
+	  post-build.sh installs it there when this option is
+	  enabled. Startup model (headless agent vs tty1 kiosk
+	  replacing startkodi.sh) is an open ARCHITECTURE decision
+	  (§8) — until it is made, startkodi.sh keeps the kiosk and
+	  the client runs as a managed service only.

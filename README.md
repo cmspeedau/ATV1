@@ -49,8 +49,10 @@ docker run -it --rm -v ~/ATV1:/atv1-src debian:stretch bash
 ```
 
 ```sh
-# inside the container
-apt-get update && apt-get install -y --no-install-recommends \
+# inside the container — stretch is archived (LTS ended 2025-06), repoint apt
+# at archive.debian.org or apt-get update fails against dead mirrors
+printf 'deb http://archive.debian.org/debian stretch main\ndeb http://archive.debian.org/debian-security stretch/updates main\n' > /etc/apt/sources.list
+apt-get update -o Acquire::Check-Valid-Until=false && apt-get install -y --no-install-recommends \
   build-essential git cpio rsync file bc wget python perl unzip \
   bison flex sed libncurses-dev libssl-dev ca-certificates
 

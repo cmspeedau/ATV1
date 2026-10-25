@@ -32,6 +32,13 @@ BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.14.335"
+# Toolchain headers stay at the release's 4.12 (its choice list tops
+# out there): "same as kernel" (the default when a kernel is built)
+# trips this era's consistency check — expected 4.12.x, got 4.14.x.
+# glibc capped at 4.12 UAPI under a 4.14 kernel is the normal
+# old-userland/new-kernel pairing; CrystalHD is a kernel-side symbol
+# and unaffected.
+BR2_KERNEL_HEADERS_4_12=y
 # x86 i386 defconfig + this board's fragment (crystalhd staging, fb,
 # NIC candidates). The fragment re-applies on every defconfig run —
 # no menuconfig capture step needed (README §4).

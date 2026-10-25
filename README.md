@@ -33,16 +33,19 @@ tools/build-client.sh                     out-of-era Rust cross-build vs era SDK
 client/                                   ← convention path for the built binary (untracked)
 ```
 
-## 2. Where to build — NOT on this volume
+## 2. Where to build — Linux container either way
 
-This tree lives on **ExFAT** (`/Volumes/EXTData`). Text files are happy
-here; a Buildroot **build** is not (no symlinks/permissions → fakeroot
-and image generation fail). Build in a Linux container on a native-fs
-volume, from a copy of this tree:
+This tree lives on **APFS** at `~/ATV1` (moved from ExFAT 2026-10-25;
+git and text files are happy here, no AppleDouble junk, permissions
+real). What has **not** changed: Buildroot cannot build on macOS itself,
+so every build happens in a Linux container, from a copy of this tree —
+building *through* a Docker bind-mount of the Mac's disk is technically
+possible but glacially slow for Buildroot's hundreds of thousands of
+small files. rsync in, build on the container's native fs:
 
 ```sh
-# macOS side: Docker Desktop. Image is the era-matched host (gcc 6, py2.7).
-docker run -it --rm -v /Volumes/EXTData:/extdata debian:stretch bash
+# macOS side: Docker Desktop or colima. Image is the era-matched host (gcc 6, py2.7).
+docker run -it --rm -v ~/ATV1:/atv1-src debian:stretch bash
 ```
 
 ```sh
@@ -51,8 +54,8 @@ apt-get update && apt-get install -y --no-install-recommends \
   build-essential git cpio rsync file bc wget python perl unzip \
   bison flex sed libncurses-dev libssl-dev ca-certificates
 
-# copy the tree off ExFAT — exclude AppleDouble junk that ExFAT carries
-rsync -a --exclude='._*' --exclude='.DS_Store' /extdata/Projects/ATV1/ /root/atv1/
+# copy the tree onto the container's own fs — build speed, not correctness
+rsync -a /atv1-src/ /root/atv1/
 git clone --depth 1 --branch 2017.08.x \
   https://git.buildroot.net/buildroot /root/buildroot
 

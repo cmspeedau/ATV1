@@ -1,0 +1,101 @@
+# ============================================================
+# ATV1 kernel fragment — merge into the i386 defconfig via
+#   cd output/build/linux-4.14.335
+#   ./scripts/kconfig/merge_config.sh -m .config <this file>
+#   make oldconfig
+# then capture with `make linux-update-defconfig` (README §4).
+# ============================================================
+
+# ---- Broadcom BCM70012 CrystalHD H.264 decoder (the whole point) ----
+# Staging driver, removed from Linux ~4.16. Built-in so Kodi can open
+# /dev/crystalhd the instant it starts.
+CONFIG_STAGING=y
+CONFIG_CRYSTALHD=y
+
+# ---- GPU: GeForce Go 7300 via DRM/nouveau ----
+CONFIG_DRM=y
+CONFIG_DRM_NOUVEAU=y
+CONFIG_DRM_TTM=y
+# 945GUX northbridge also exposes an integrated GMA950. NEVER enable
+# i915: X must bind to the 7300 that feeds the HDMI port.
+# CONFIG_DRM_I915 is not set
+# Legacy fbdev nv driver would fight nouveau for the same card:
+# CONFIG_FB_NVIDIA is not set
+CONFIG_X86_PAT=y
+
+# ---- Boot / console ----
+CONFIG_EFI=y
+CONFIG_EFI_MIXED=y
+CONFIG_BINFMT_ELF=y
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+CONFIG_SERIAL_8250_PCI=y
+CONFIG_SERIAL_8250_PNP=y
+CONFIG_VT=y
+CONFIG_VT_CONSOLE=y
+CONFIG_HW_CONSOLE=y
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# ---- Storage: internal 2.5" SATA (ICH7: IDE-emulated or AHCI) + USB ----
+CONFIG_BLK_DEV_SD=y
+CONFIG_ATA=y
+CONFIG_ATA_PIIX=y
+CONFIG_SATA_AHCI=y
+CONFIG_USB_STORAGE=y
+CONFIG_USB_EHCI_HCD=y
+CONFIG_USB_OHCI_HCD=y
+CONFIG_USB_UHCI_HCD=y
+# a modest 2007 EHCI host — keep quirks off, it prefers patient devices
+
+# ---- Root filesystems ----
+CONFIG_EXT4_FS=y
+CONFIG_VFAT_FS=y
+CONFIG_MSDOS_FS=y
+CONFIG_FAT_FS=y
+CONFIG_PROC_FS=y
+CONFIG_SYSFS=y
+CONFIG_TMPFS=y
+
+# ---- Network: Apple's 945-era NIC is one of these; cheap insurance ----
+CONFIG_NET_ETHERNET=y
+CONFIG_NET_VENDOR_INTEL=y
+CONFIG_E1000=y
+CONFIG_NET_VENDOR_BROADCOM=y
+CONFIG_TIGON3=y
+CONFIG_BNX2=y
+CONFIG_NET_VENDOR_MARVELL=y
+CONFIG_SKY2=y
+CONFIG_NET_VENDOR_REALTEK=y
+CONFIG_R8169=y
+CONFIG_NET_VENDOR_ATHEROS=y
+CONFIG_ATL2=y
+
+# ---- Audio: ICH7 HD-Audio (HDMI + optical out) ----
+CONFIG_SOUND=y
+CONFIG_SND=y
+CONFIG_SND_HDA_INTEL=y
+CONFIG_SND_HDA_HWDEP=y
+CONFIG_SND_HDA_CODEC_REALTEK=y
+
+# ---- Input: USB keyboard for bring-up ----
+CONFIG_INPUT=y
+CONFIG_INPUT_KEYBOARD=y
+CONFIG_KEYBOARD_ATKBD=y
+CONFIG_HID=y
+CONFIG_USB_HID=y
+
+# ---- Power/thermals: this box is fanless-to-near-silent, keep it cool ----
+CONFIG_CPU_FREQ=y
+CONFIG_CPU_FREQ_STAT=y
+CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND=y
+CONFIG_CPU_FREQ_GOV_POWERSAVE=y
+CONFIG_CPU_IDLE=y
+CONFIG_SENSORS_CORETEMP=y
+CONFIG_THERMAL=y
+
+# ---- Future/roadmap (enable with squashfs+overlay & zram pass) ----
+# CONFIG_SQUASHFS=y
+# CONFIG_SQUASHFS_LZ4=y
+# CONFIG_OVERLAY_FS=y
+# CONFIG_ZRAM=y

@@ -1,0 +1,38 @@
+<!-- ATV1: Kodi 17 (Krypton) settings tuned for 256 MB RAM.
+     Paths here assume Kodi runs as root (HOME=/root, kiosk model). -->
+<advancedsettings>
+
+  <!-- Demuxer/buffer: RAM buffering but keep it small on 256 MB.
+       membuffermode 1 = read into RAM up to the memfile limit,
+       factor 1.0 keeps the buffer pool conservative for 1080p. -->
+  <video>
+    <membuffermode>1</membuffermode>
+    <membufferfactor>1.0</membufferfactor>
+  </video>
+
+  <!-- Library: this box streams its own small collection. Tiny DB
+       caches; scan once, then disable library updates in the GUI. -->
+  <videodatabase>
+    <memory>1024</memory>
+    <cachesize>2048</cachesize>
+  </videodatabase>
+  <musicdatabase>
+    <memory>512</memory>
+    <cachesize>1024</cachesize>
+  </musicdatabase>
+
+  <!-- Textures: fewer cached skin images = more RAM for video. -->
+  <texturecache>
+    <cachesize>2048</cachesize>
+  </texturecache>
+
+  <!-- Network: HTTP server + JSON-RPC stay ON so a phone can be the
+       remote (zero-solder fallback while the IR receiver is WIP). -->
+  <services>
+    <esallinterfaces>false</esallinterfaces>
+    <eshttpport>8080</eshttpport>
+    <webserver>true</webserver>
+    <webserverport>8080</webserverport>
+  </services>
+
+</advancedsettings>

@@ -1,0 +1,60 @@
+# ============================================================
+# ATV1 — Apple TV 1st gen (A1218) Kodi appliance
+# Target era: Buildroot 2017.08 (see README — build in era)
+# Minimal fragment: only lines that differ from defaults.
+# ============================================================
+
+# ---- Target: 32-bit, Crofton Pentium M ----
+BR2_i386=y
+BR2_INSTALL_LIBSTDCPP=y
+BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
+
+# ---- System ----
+BR2_TARGET_GENERIC_HOSTNAME="atv1"
+BR2_TARGET_GENERIC_ISSUE="ATV1 Kodi appliance"
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/rootfs-overlay"
+BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-build.sh"
+BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh"
+
+# ---- Kernel: 4.14.x — last LTS with staging/crystalhd ----
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_VERSION=y
+BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.14.335"
+# Bootstrap: start from the x86 i386 defconfig, apply board/atv1/linux.fragment
+# in `make linux-menuconfig`, then capture to linux.config (README §4).
+BR2_LINUX_KERNEL_USE_DEFCONFIG=y
+BR2_LINUX_KERNEL_DEFCONFIG="i386"
+# After capture, switch to:
+# BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
+# BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.config"
+
+# ---- Graphics: Go 7300 via nouveau (NOT the 945GM's GMA950) ----
+BR2_PACKAGE_XORG_SERVER=y
+BR2_PACKAGE_XDRIVER_XF86VIDEO_NOUVEAU=y
+BR2_PACKAGE_XINIT=y
+BR2_PACKAGE_MESA3D=y
+# nv40 classic DRI driver — gone from Mesa >= 17.3. If this symbol is
+# missing, use Buildroot 2017.05/2016.11 (README §5 checklist).
+BR2_PACKAGE_MESA3D_DRI_DRIVER_NV40=y
+# verify in menuconfig: Mesa must keep GLX (desktop GL) enabled for Kodi
+
+# ---- Media: Kodi 17 + CrystalHD userspace (removed in Kodi 18!) ----
+BR2_PACKAGE_KODI=y
+BR2_PACKAGE_KODI_PYTHON=y
+BR2_PACKAGE_CRYSTALHD=y
+
+# ---- Utilities ----
+BR2_PACKAGE_ALSA_UTILS=y
+BR2_PACKAGE_DROPBEAR=y
+BR2_PACKAGE_HTOP=y
+
+# ---- Bootloader: GRUB ia32 EFI (ATV1 firmware is 32-bit EFI) ----
+BR2_TARGET_GRUB2=y
+BR2_TARGET_GRUB2_I386_EFI=y
+# config embedded into grub image: board/grub-i386-efi.cfg
+
+# ---- Rootfs & disk image ----
+BR2_TARGET_ROOTFS_EXT2=y
+BR2_TARGET_ROOTFS_EXT2_4=y
+BR2_TARGET_ROOTFS_EXT2_SIZE="512M"
+BR2_PACKAGE_HOST_GENIMAGE=y

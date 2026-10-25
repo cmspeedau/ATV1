@@ -1,0 +1,19 @@
+# /etc/inittab — replaces the Buildroot skeleton default.
+# Keep the ttyS0 getty (onboard UART header) and run the Kodi kiosk on tty1.
+
+# System initialization
+::sysinit:/etc/init.d/rcS
+
+# Serial console on the onboard UART (57600 8N1) — bring-up + rescue
+ttyS0::respawn:/sbin/getty -L ttyS0 57600 vt100
+
+# Kodi kiosk on the HDMI console (respawn: Kodi quit or crash returns to Kodi)
+tty1::respawn:/bin/sh /etc/atv1/startkodi.sh
+
+# What to do when we get ^C on the console
+::ctrlaltdel:/sbin/reboot
+
+# System shutdown
+::shutdown:/etc/init.d/rcK
+::shutdown:/bin/umount -a -r
+::restart:/sbin/init

@@ -1,0 +1,15 @@
+config BR2_PACKAGE_CRYSTALHD
+	bool "crystalhd"
+	depends on BR2_i386 || BR2_x86_64
+	depends on BR2_TOOLCHAIN_USES_GLIBC
+	select BR2_PACKAGE_LINUX_HEADERS
+	help
+	  Userspace library and utilities for the Broadcom BCM70012
+	  CrystalHD hardware H.264/MPEG-2 decoder, as found onboard the
+	  Apple TV 1st generation (A1218). Requires the in-kernel staging
+	  crystalhd driver (Linux <= 4.15, CONFIG_CRYSTALHD=y).
+
+	  https://github.com/LibreELEC/crystalhd
+
+comment "crystalhd needs an x86 glibc toolchain"
+	depends on !(BR2_i386 || BR2_x86_64) || !BR2_TOOLCHAIN_USES_GLIBC

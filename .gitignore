@@ -1,0 +1,7 @@
+# build artifacts never live in the external tree (build runs in a container)
+output/
+dl/
+images/
+*.img
+linux-backup/
+.DS_Store

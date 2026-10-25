@@ -1,0 +1,18 @@
+config BR2_PACKAGE_ATV1_CLIENT
+	bool "atv1-client (prebuilt Rust appliance client)"
+	help
+	  The Rust appliance control-surface binary (ARCHITECTURE
+	  doc §1-§4): full-screen update flow, coordinator agent,
+	  Kodi handoff adapter. Rust-only application code is the
+	  project convention; Buildroot 2017.08-era has no Rust
+	  toolchain, so the binary is cross-built against this
+	  system's SDK out-of-era (tools/build-client.sh) and is
+	  installed from the convention path:
+
+	    $(BR2_EXTERNAL_ATV1_PATH)/client/atv1-client
+
+  post-build.sh installs it there when this option is enabled.
+  Startup model (headless agent vs tty1 kiosk replacing
+  startkodi.sh) is an open ARCHITECTURE decision (§8) — until
+  it is made, startkodi.sh keeps the kiosk and the client runs
+  as a managed service only.

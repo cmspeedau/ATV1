@@ -4,6 +4,7 @@ dl/
 images/
 *.img
 linux-backup/
+client/atv1-client*
 
 # macOS/ExFAT junk — must never enter the tree or a rootfs overlay copy
 ._*

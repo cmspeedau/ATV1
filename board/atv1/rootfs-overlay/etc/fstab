@@ -1,0 +1,19 @@
+# /etc/fstab — replaces the Buildroot skeleton default.
+# LABEL-based mounts only: device letters shift between USB (sdb/sdc)
+# and internal (sda) boots, and the ARCHITECTURE doc requires the data
+# area to survive rootfs re-imaging.
+
+/dev/root            /                    ext4    rw,relatime                                     0 1
+proc                 /proc                proc    defaults                                        0 0
+devpts               /dev/pts             devpts  mode=0620,ptmxmode=0000,gid=5                 0 0
+tmpfs                /run                 tmpfs   nodev,nosuid,mode=0755                        0 0
+tmpfs                /var/tmp             tmpfs   nodev,nosuid                                    0 0
+tmpfs                /tmp                 tmpfs   nodev,nosuid                                    0 0
+
+# Persistent appliance data (sync manifest, managed media root, update
+# journal, diagnostics). Grows to the rest of the disk on internal install.
+LABEL=ATV1DATA       /data                ext4    rw,noatime                                      0 2
+
+# Managed media root lives under /data (media/, kodi/, sync/, updates/,
+# journal/) — created on first mount by S20datadirs. Kodi source paths
+# and the coordinator's sync target both point here, never at P1/P2.

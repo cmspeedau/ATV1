@@ -1,0 +1,23 @@
+#!/bin/sh
+# S20datadirs — persistent appliance data tree (ARCHITECTURE doc §1/§4:
+# managed roots, sync manifest, update journal, diagnostics live on the
+# ATV1DATA partition and must survive rootfs re-imaging).
+#
+# Runs after rcS mounts (/data is fstab-driven; we verify and create).
+
+case "$1" in
+  start)
+        if ! grep -q ' /data ' /proc/mounts; then
+                mount /data 2>/dev/null
+        fi
+        if ! grep -q ' /data ' /proc/mounts; then
+                echo "S20datadirs: ATV1DATA not found — degraded, no writes to /data" >&2
+                exit 0
+        fi
+        mkdir -p /data/media /data/sync /data/updates /data/journal /data/diagnostics
+        ;;
+  stop|restart|reload)
+        ;;
+esac
+
+exit 0

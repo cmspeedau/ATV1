@@ -22,10 +22,15 @@ board/atv1/
   post-build.sh / post-image.sh           exec bits + EFI assembly + image
   rootfs-overlay/
     etc/inittab                           serial getty + Kodi kiosk on tty1
+    etc/fstab                             LABEL mounts: /data survives re-imaging
+    etc/init.d/S20datadirs                /data managed tree (media/sync/updates/journal)
     etc/atv1/startkodi.sh                 startx + kodi -fs
     etc/asound.conf.example               HDMI audio default, S/PDIF noted
     root/.kodi/userdata/advancedsettings.xml   RAM-tuned Kodi 17
 package/crystalhd/                        LibreELEC-maintained BCM70012 userspace
+package/atv1-client/                      prebuilt Rust client hook (config only)
+tools/build-client.sh                     out-of-era Rust cross-build vs era SDK
+client/                                   ← convention path for the built binary (untracked)
 ```
 
 ## 2. Where to build — NOT on this volume
@@ -131,7 +136,20 @@ Era names drift; verify these exist/enabled after `atv1_defconfig`:
 
 ## 6. Booting the box
 
-The A1218's firmware verifies its own EFI binaries until you unlock it:
+**Two boot paths, by design (ARCHITECTURE doc §4 "A1218 boot reality"):**
+
+* **Dev path (this tree, today):** GRUB ia32-efi on MBR via the EFI-
+  verification bypass loaders (ATV1sm / atv-linux-loader). Fast iteration,
+  but it is *not* the product boot story.
+* **Product path (Stage-0 target, unobserved):** stock Apple chain —
+  firmware loads Apple `boot.efi`, which loads `mach_kernel` (a wrapped
+  32-bit kernel + initramfs), GPT layout with the `atvrecv` FAT32 boot
+  partition. Buildroot emits the artifacts (bzImage-as-mach_kernel,
+  initramfs, hashes) but the exact selection rules/partition map are
+  **Unknown until observed on an A1218** — do not fabricate that image
+  from a host. gptfdisk is in the rootfs for the observation work.
+
+For path 1: the A1218's firmware verifies its own EFI binaries until you unlock it:
 
 1. **atv-linux-loader** — github.com/DistroHopper39B/atv-linux-loader —
    USB loader that boots Linux on the ATV1's 32-bit EFI.
@@ -152,10 +170,13 @@ Iterate: edit tree → re-copy into container → `make O=/root/out all`
 
 ## 7. Permanent install
 
-Boot the stick, then `dd` the same image to the internal bay — the A1218
-takes a **standard 2.5" SATA** drive (no ZIF weirdness), so this is the
-WD Green 2 TB: rootfs P2 + the rest of the disk unformatted for now, or
-grow it later (`resize2fs` + P2 resize; or add a P3 media partition).
+Boot the stick, then `dd` the image to the internal bay — the A1218 takes
+a **standard 2.5" SATA** drive (no ZIF weirdness), so this is the WD Green
+2 TB: P1 boot (32 M) + P2 rootfs (512 M) + P3 ATV1DATA. On target, grow
+P3 across the rest of the disk and resize its filesystem — `sgdisk`,
+`fdisk`, `e2fsprogs` are all in the rootfs for exactly this. `/data` is
+LABEL-mounted, so nothing else needs to change. Never re-image P3; the
+re-image model (re-flash P1/P2, keep P3) **is** the A1218 recovery story.
 From macOS, after a clean unmount: `sudo dd if=atv1-disk.img of=/dev/rdiskN bs=4m`.
 
 ## 8. Roadmap (deliberately not in v1)
@@ -176,3 +197,29 @@ IPTV add-ons; 100 Mbps Ethernet ≈ 11 MB/s stream cap; stock ATV1 has no
 Wi-Fi driver without extracted b43 firmware (use the wire). Judge it
 against a 2016 library and it's magic; judge it against 2026 codecs and
 build the N100 box too.
+
+## 10. Alignment with ARCHITECTURE-APPLE-TV-CONTROLS.md
+
+The appliance design doc (iTunes-for-devices coordinator, Rust-only
+client, whole-system Buildroot updates). Where this tree stands against it:
+
+| Doc position | Tree status |
+|---|---|
+| A1218 boot = Apple EFI/`boot.efi`/`mach_kernel` chain, **experimental/target-specific** | §6 dev-vs-product path split; no fabricated GPT product image until Stage-0 observation (`sgdisk` in rootfs for the observation work) |
+| **No OTA activation on A1218**; A/B is hypothetical | No A/B slots in genimage; recovery = re-image P1/P2, P3/`ATV1DATA` persists (S20datadirs + LABEL fstab). Matches "external recovery only" baseline |
+| Persistent data / managed roots / update journal separate from system | P3 + `/data/{media,sync,updates,journal,diagnostics}`; media and Kodi sources never point at system partitions |
+| Rust-only client, native UI, coordinator agent + Kodi adapter | 2017.08-era Buildroot **predates in-tree Rust (~2018.05)** → two-container split: system in the era image, client cross-built modern-rust → i586 glibc against the era **SDK** (`tools/build-client.sh`), installed by `BR2_PACKAGE_ATV1_CLIENT` |
+| Startup model **Unknown** (headless vs foreground-over-Kodi) | startkodi.sh keeps the kiosk; client installs to `/usr/bin/atv1-client` without claiming the display until §8 is decided |
+| Kodi adapter **Unknown** (add-on / API / filesystem-only contract) | Kodi 17 JSON-RPC :8080 enabled — the natural first candidate to *test and reject-or-adopt* against the doc's idempotent handoff/ack rules; JSON-RPC ack semantics are weak, so the doc's "never claim success from process presence" bar is exactly the test |
+| Reproducible, signed, versioned artifacts; channels/promotion | Era Buildroot predates `BR2_REPRODUCIBLE` (~2020) — reproducibility is best-effort: pinned versions + recorded container digest + `.hash` files; **signing/promotion live outside Buildroot** (artifact + manifest signed after build). v1.0.0 release records = external tooling, per doc §5 |
+| Coordinator = local LAN, ports/transport **Unknown** | Nothing in this tree listens except dropbear (dev) and Kodi :8080. No LAN protocol is pre-selected — doc §8 respected |
+| LAN distribution is transport-only, device owns verification | N/A until Stage 2; update artifacts land in `/data/updates`, nothing self-activates |
+
+**Doc-Stage → tree mapping:** Stage 0 (boot contract) = §6 product path,
+needs hands-on A1218 observation; Stage 1 (UI shell) = Rust client crate;
+Stage 1A (control plane) = client crate + no pre-selected transport;
+Stage 2 (image pipeline) = this tree + external signing step; Stage 3/4
+(reboot/health) = **gated on the boot-chain observation** — the honest
+A1218 baseline remains re-image recovery. The doc's own acceptance gate
+applies to this README: nothing here is "supported" until M1-M7 evidence
+on real hardware.

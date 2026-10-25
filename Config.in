@@ -1,5 +1,7 @@
 menu "ATV1 board support"
 
 source "$BR2_EXTERNAL_ATV1_PATH/package/crystalhd/Config.in"
+source "$BR2_EXTERNAL_ATV1_PATH/package/atv1-client/Config.in"
 
 endmenu
+

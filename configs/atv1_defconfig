@@ -47,6 +47,16 @@ BR2_PACKAGE_CRYSTALHD=y
 BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_DROPBEAR=y
 BR2_PACKAGE_HTOP=y
+# target-side disk surgery: grow the data partition at install, GPT work for
+# the stock boot-chain path once observed on hardware (ARCHITECTURE doc §4)
+BR2_PACKAGE_E2FSPROGS=y
+BR2_PACKAGE_GPTFDISK=y
+BR2_PACKAGE_GPTFDISK_SGDISK=y
+
+# ---- Appliance client (ARCHITECTURE doc): Rust, built out-of-era against
+# the Buildroot SDK — see tools/build-client.sh. Default-off until the
+# binary exists; when it does, it takes over the tty1 kiosk slot. ----
+# BR2_PACKAGE_ATV1_CLIENT=y
 
 # ---- Bootloader: GRUB ia32 EFI (ATV1 firmware is 32-bit EFI) ----
 BR2_TARGET_GRUB2=y

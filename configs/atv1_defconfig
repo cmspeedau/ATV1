@@ -6,7 +6,19 @@
 
 # ---- Target: 32-bit, Crofton Pentium M ----
 BR2_i386=y
-BR2_INSTALL_LIBSTDCPP=y
+# The actual variant. i586 (the default) has no SSE and hides Kodi;
+# pentium_m selects MMX+SSE — claiming no SSE2 or beyond, since
+# Crofton's exact ISA level is not verified on hardware. If Stage-0
+# CPUID shows SSE2 we may raise to pentium4; not before.
+BR2_x86_pentium_m=y
+# The 2017.08-era prompt is BR2_TOOLCHAIN_BUILDROOT_CXX; it selects the
+# promptless BR2_INSTALL_LIBSTDCPP. Assigning the latter directly is
+# silently dropped by kconfig — this exact mistake hid Kodi/Mesa/Xorg
+# from the first defconfig run.
+BR2_TOOLCHAIN_BUILDROOT_CXX=y
+# glibc, not uClibc: crystalhd userspace depends on it, and the Rust
+# appliance client targets i586-unknown-linux-gnu.
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
 
 # ---- System ----
@@ -20,27 +32,42 @@ BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.14.335"
-# Bootstrap: start from the x86 i386 defconfig, apply board/atv1/linux.fragment
-# in `make linux-menuconfig`, then capture to linux.config (README §4).
+# x86 i386 defconfig + this board's fragment (crystalhd staging, fb,
+# NIC candidates). The fragment re-applies on every defconfig run —
+# no menuconfig capture step needed (README §4).
 BR2_LINUX_KERNEL_USE_DEFCONFIG=y
 BR2_LINUX_KERNEL_DEFCONFIG="i386"
-# After capture, switch to:
-# BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-# BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.config"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.fragment"
 
 # ---- Graphics: Go 7300 via nouveau (NOT the 945GM's GMA950) ----
-BR2_PACKAGE_XORG_SERVER=y
-BR2_PACKAGE_XDRIVER_XF86VIDEO_NOUVEAU=y
-BR2_PACKAGE_XINIT=y
+# 2017.08-era X11 umbrella symbol (BR2_PACKAGE_XORG_SERVER is a later
+# naming; kconfig silently drops assignments to unknown symbols).
+BR2_PACKAGE_XORG7=y
+# xinit and the driver menu hang off the server symbol in this layout.
+BR2_PACKAGE_XSERVER_XORG_SERVER=y
+BR2_PACKAGE_XDRIVER_XF86_VIDEO_NOUVEAU=y
+BR2_PACKAGE_XAPP_XINIT=y
 BR2_PACKAGE_MESA3D=y
-# nv40 classic DRI driver — gone from Mesa >= 17.3. If this symbol is
-# missing, use Buildroot 2017.05/2016.11 (README §5 checklist).
-BR2_PACKAGE_MESA3D_DRI_DRIVER_NV40=y
-# verify in menuconfig: Mesa must keep GLX (desktop GL) enabled for Kodi
+# Kodi's visibility needs HAS_LIBEGL (+LIBGL): Mesa's EGL/GLES APIs are
+# explicit options in this era. With classic DRI this is Mesa's
+# egl-dri2 backend — whether Kodi's runtime prefers GLX or EGL on nv40
+# is a Stage-1 observation, but the build gate needs these flags set.
+BR2_PACKAGE_MESA3D_OPENGL_EGL=y
+BR2_PACKAGE_MESA3D_OPENGL_ES=y
+# The nv40 generation gets DRI through Mesa 17.1's NOUVEAU classic
+# driver (there is no _NV40 symbol); this support is gone from
+# Mesa >= 17.3 — pinned by this Buildroot's 17.1.5 (README §5).
+BR2_PACKAGE_MESA3D_DRI_DRIVER_NOUVEAU=y
 
 # ---- Media: Kodi 17 + CrystalHD userspace (removed in Kodi 18!) ----
+# Kodi is visible only once python2 carries .py modules (its own gate
+# comment): BR2_PACKAGE_PYTHON is this era's python2 symbol, and the
+# era default installs .pyc ONLY — which the gate rejects, so the
+# .py+.pyc choice is explicit. Kodi 17 bundles its Python runtime in
+# core; this era has no separate BR2_PACKAGE_KODI_PYTHON symbol.
+BR2_PACKAGE_PYTHON=y
+BR2_PACKAGE_PYTHON_PY_PYC=y
 BR2_PACKAGE_KODI=y
-BR2_PACKAGE_KODI_PYTHON=y
 BR2_PACKAGE_CRYSTALHD=y
 
 # ---- Utilities ----

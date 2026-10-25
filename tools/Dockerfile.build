@@ -12,7 +12,9 @@ RUN printf 'deb http://archive.debian.org/debian stretch main\ndeb http://archiv
       bison flex sed gawk diffstat \
       libncurses-dev libssl-dev libelf-dev \
       ca-certificates openssh-client \
+      openjdk-8-jre-headless \
  && apt-get clean \ && rm -rf /var/lib/apt/lists/*
+# kodi selects BR2_NEEDS_HOST_JAVA; the headless JRE satisfies it.
 
 WORKDIR /root
 CMD ["bash"]

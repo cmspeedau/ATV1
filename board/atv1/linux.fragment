@@ -18,7 +18,13 @@
 # CONFIG_CRYSTALHD=y here, enable package/crystalhd (mirror alive,
 # hash recorded). A backport of crystalhd-arch's dkms port (targets
 # 4.19+) to 4.9 is the fallback if the 3.16 flip ever proves
-# unworkable. Until then: software decode, no staging.
+# unworkable. BUYING CONSTRAINT (verified from the driver's own PCI id
+# table at v3.16.85): it binds exactly ONE device — 14e4:1612, i.e. the
+# BCM70012 card (card label BCM970012, the dual-chip board). The newer
+# BCM70015 cards (card labels BCM970015 / Samsung AW-VD920) are NOT
+# in-tree — they must not be bought for this project. lspci check for
+# the real card: 0x14e4:0x1612. Until a card is in: software decode,
+# no staging.
 
 # ---- GPU: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
 CONFIG_DRM=y

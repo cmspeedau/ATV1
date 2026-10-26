@@ -149,10 +149,12 @@ Era names drift; verify these exist/enabled after `atv1_defconfig`:
       (no `/dev/crystalhd` unless a card was added).
 - [ ] `crystalhd` (this tree) — **dormant, do not enable yet**: no card
       in the box. Mirror is alive and verified (crystalhd-arch,
-      sha512 in `crystalhd.hash`). When a card arrives: flip kernel to
-      3.16.85 (last in-tree driver), enable the package, add
-      `KODI_DEPENDENCIES += crystalhd`, rebuild Kodi and CHECK its
-      configure log for crystalhd pickup — never assume it.
+      sha512 in `crystalhd.hash`). Card to buy: **BCM970012** card
+      (BCM70012 chip, PCI 14e4:1612 — the ONLY id the in-tree driver
+      binds). BCM970015/AW-VD920 = wrong card, never works here.
+      When a card arrives: flip kernel to 3.16.85 (last in-tree
+      driver), enable the package, add `KODI_DEPENDENCIES += crystalhd`,
+      rebuild Kodi and CHECK its configure log for crystalhd pickup.
 
 ## 6. Booting the box
 

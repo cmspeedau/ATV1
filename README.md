@@ -136,6 +136,28 @@ grow the partition, `resize2fs` it. `/data` is mounted by LABEL
 (`ATV1DATA`), so nothing else changes. **Never re-image P3** — recovery
 model = re-flash P1/P2 and keep P3 (no OTA on this boot chain).
 
+## 6a. SMB library mount (OS level)
+
+The image carries the in-kernel SMB client (`CONFIG_CIFS=y`, speaks SMB
+2.1/3.0 — what macOS sharing serves) and the `mount.cifs` helper
+(cifs-utils). Client only: the TV never serves files.
+
+```sh
+# on the TV (or over ssh):
+printf 'username=YOU\npassword=YOURPASS\n' > /etc/atv1/smb.creds
+chmod 0600 /etc/atv1/smb.creds              # never put creds in /etc/fstab
+mkdir -p /data/media/library
+mount -t cifs //SERVER/SHARE /data/media/library \
+  -o vers=3.0,credentials=/etc/atv1/smb.creds,noatime
+```
+
+Point Kodi sources at `/data/media/library/...`, not at `smb://` — the
+mount is invisible to Kodi's own (absent) SMB client and works for every
+tool. Persistent variant: the commented fstab line in `/etc/fstab`
+(uncomment, adjust server/share; `_netdev` keeps boot sane when the
+server is down). If `mount -t cifs` fails with "bad protocol": macOS
+can be told to speak 2.1 — use `vers=2.1`.
+
 ## 7. Era is load-bearing — do not bump Buildroot
 
 | Pin | Reason (false in later eras) |
@@ -187,8 +209,10 @@ Driver history: in-tree through 3.16.x, deleted in 3.17. Enablement:
 - NIC prune: drop e1000/tg3/bnx2/sky2/r8169 once unit A's NIC is seen.
 - IR remote (lirc macmini era driver); JSON-RPC :8080 works meanwhile.
 - Squashfs rootfs + overlay + zram (the real RAM win).
-- SMB/NFS client mounts; `make legal-info` + per-package `.hash` when
-  this ships as a product.
+- SMB client mounts: DONE at OS level (§6a: kernel CIFS + cifs-utils +
+  fstab example). NFS remains open if ever needed.
+- `make legal-info` + a pinned `.hash` per package when this ships as a
+  product.
 
 ## 11. Limits of the silicon (by design, not bugs)
 

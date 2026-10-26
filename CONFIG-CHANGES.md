@@ -53,6 +53,11 @@ stories behind entries: LOG.md.
   `file { name = "atv1-data.ext4"; copy = false }` (v9 feeds ext images
   `cp -a --rootpath` = whole rootfs → ENOSPC; `file` embeds raw input).
   post-image.sh + `mkfs.ext4 -F -q -L ATV1DATA atv1-data.ext4 65536`.
+- (uncommitted→) 10-27 — SMB OS-level client: fragment +
+  `CONFIG_CIFS=y`; defconfig + `BR2_PACKAGE_CIFS_UTILS=y`; fstab +
+  commented mount example; README §6a. Client-only by design. Verify
+  merged kernel `.config` after rebuild (silent-drop rule applies to
+  fragments too).
 
 ## Effective config (first-good image, 2026-10-27)
 

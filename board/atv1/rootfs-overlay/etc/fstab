@@ -17,3 +17,12 @@ LABEL=ATV1DATA       /data                ext4    rw,noatime                    
 # Managed media root lives under /data (media/, kodi/, sync/, updates/,
 # journal/) — created on first mount by S20datadirs. Kodi source paths
 # and the coordinator's sync target both point here, never at P1/P2.
+
+# SMB library mount (kernel CONFIG_CIFS + cifs-utils are in the image).
+# Kept commented: the server address and credentials are site-specific.
+# Put username=.../password=... in /etc/atv1/smb.creds, chmod 0600, then:
+# mkdir -p /data/media/library
+# mount -t cifs //SERVER/SHARE /data/media/library -o vers=3.0,credentials=/etc/atv1/smb.creds
+# Persistent variant (uncomment, adjust; _netdev matters: network must be
+# up before the mount is attempted):
+# //SERVER/SHARE  /data/media/library  cifs  vers=3.0,credentials=/etc/atv1/smb.creds,_netdev,noatime  0 0

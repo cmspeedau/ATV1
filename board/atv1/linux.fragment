@@ -75,6 +75,14 @@ CONFIG_PROC_FS=y
 CONFIG_SYSFS=y
 CONFIG_TMPFS=y
 
+# ---- Network filesystem: OS-level SMB client (library mounts) ----
+# mount -t cifs: the in-kernel SMB client. 4.9 speaks SMB 2.1/3.0 —
+# what macOS file sharing serves. Client only, by design: the TV never
+# serves files (coordinator owns media management). Credentials live in
+# a 0600 file, never in fstab (README §6a). NFS stays prose until a real
+# need — same merger rule as everything below here.
+CONFIG_CIFS=y
+
 # ---- Network: PROVEN on unit B (ioreg): Realtek RTL8139 (10ec:8139) ----
 # None of the five "likely 2007" candidates below matches that chip —
 # 8139too is the driver. Candidates stay as cheap insurance until unit

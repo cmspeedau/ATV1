@@ -134,6 +134,22 @@ Raw findings (expect scripts kept at
 - Docker Desktop note: it quit silently once mid-failure (container sat
   at exit(2) for 8 h). Check `docker ps` when a run goes quiet.
 
+## 2026-10-27 — SMB added at OS level
+
+- Question "does the image have SMB?" answered from the build tree: no —
+  server, client tools, kernel CIFS, and even Kodi's `smb://` transport
+  (gated on unselected samba4 → `-DENABLE_SMBCLIENT=OFF`) were all off.
+- Owner's call: OS-level client only (coordinator owns media
+  management; the TV must never serve). Changes: fragment
+  `CONFIG_CIFS=y` (4.9 client speaks SMB 2.1/3.0 = what macOS serves),
+  defconfig `BR2_PACKAGE_CIFS_UTILS=y`, fstab gained a commented
+  credentials-file example, README §6a documents the mount. Kodi sources
+  point at the mount point, not `smb://`.
+- Status: committed; rebuild pending — audit merged kernel `.config` for
+  `CONFIG_CIFS=y` when it lands (fragment symbols are subject to the
+  same silent-drop discipline). The pinned first-good sha below is the
+  pre-SMB image; record the new one after rebuild + verify.
+
 ## Current state / next
 
 - Image above ready to burn. Next milestone: USB boot of unit A

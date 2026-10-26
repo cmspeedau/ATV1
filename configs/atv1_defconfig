@@ -109,6 +109,8 @@ BR2_PACKAGE_KODI=y
 BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_DROPBEAR=y
 BR2_PACKAGE_HTOP=y
+# mount.cifs helper for CONFIG_CIFS=y (OS-level SMB client, README §6a)
+BR2_PACKAGE_CIFS_UTILS=y
 # target-side disk surgery: grow the data partition at install, GPT work for
 # the stock boot-chain path once observed on hardware (ARCHITECTURE doc §4)
 BR2_PACKAGE_E2FSPROGS=y

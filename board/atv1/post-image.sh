@@ -33,4 +33,15 @@ mkdir -p "$BIN_DIR/EFI/boot"
 cp -f "$GRUB_EFI" "$BIN_DIR/EFI/boot/bootia32.efi"
 cp -f "$GRUB_CFG_SRC" "$BIN_DIR/EFI/boot/grub.cfg"
 
+# P3 data partition content: an EMPTY ext4 labeled ATV1DATA, formatted
+# here because genimage 9 ext images are fed from --rootpath (= the
+# whole target rootfs; see genimage.cfg comment for the ENOSPC story).
+# 65536 x 1K = 64 MiB; -F because it is a regular file. mkfs.ext4 and
+# friends are on PATH here — post-image runs with buildroot's host/bin
+# (that is also how 'genimage' itself resolves).
+DATA_IMG="$BIN_DIR/atv1-data.ext4"
+rm -f "$DATA_IMG"
+mkfs.ext4 -F -q -L ATV1DATA "$DATA_IMG" 65536
+echo "post-image: data fs $DATA_IMG (label ATV1DATA, 64 MiB, empty)"
+
 exec support/scripts/genimage.sh -c "$BOARD_DIR/genimage.cfg"

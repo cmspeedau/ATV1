@@ -186,11 +186,38 @@ unlocks a faster codegen pass everywhere; unit B's aTVFlash install doubles
 as a reference OS on identical silicon (and both units' internal Apple OSes
 stay untouched — our image lives on USB/P1-P2, nothing is a one-way door).
 
+## 2026-10-27 — genimage 9's content model (the ENOSPC story)
+
+Next post-image failure after the host tools were fixed: `genext2fs:
+couldn't allocate a block (no free space)` on the 64 MB `ATV1DATA` image.
+Read the v9 source instead of guessing:
+
+- `collect_mountpoints()`: the root mountpoint is **`cp -a --rootpath`**
+  and ext images without a mountpoint use it — i.e. an `ext4` image block
+  in genimage 9 *always* receives a full copy of `--rootpath`.
+- Buildroot's `support/scripts/genimage.sh` passes
+  `--rootpath "${TARGET_DIR}"` — the whole rootfs staging tree. So the
+  empty-data intent was asking genext2fs to pack the entire rootfs into
+  64 MB. Not a size problem; a content-model problem.
+- v9 has per-image mountpoint *plumbing* but no config option for it
+  (dead code in this version).
+
+Fix (era mechanism, verified in `image-file.c` + handler registration):
+the **`file` handler** embeds a pre-built raw file from inputpath
+(`copy = false` embeds it as-is; size = file size). So `post-image.sh`
+now formats the data fs itself (`mkfs.ext4 -F -q -L ATV1DATA
+atv1-data.ext4 65536` = empty ext4, 64 MiB, host e2fsprogs) and
+`genimage.cfg` embeds it via `image rootfs-data.ext4 { file { name =
+"atv1-data.ext4"; copy = false } }`. The rootfs partition reference is
+likewise made an explicit `image rootfs.ext4 { file { copy = false } }`
+(one mechanism, no undeclared-name fallbacks). `S20datadirs` fills the
+partition on first boot.
+
 ## Current state (at last edit of this file)
 
-- Build: resumed in detached container `atv1-build` with the full host-tool
-  fix chain. Everything through rootfs + boot.vfat is stamped; this run is
-  genext2fs + e2fsprogs host builds, genimage assembly, export of
+- Build: resumed in detached container `atv1-build` with the host-tool and
+  content-model fixes. Everything through rootfs + boot.vfat is stamped;
+  this run is data-fs format + genimage assembly + export of
   `~/ATV1/images/atv1-disk.img`. Sentinel: background `docker wait`.
   Docker CLI note: `export PATH="$HOME/.docker/bin:$PATH"`.
 - **Next milestone:** dd to a USB 2.0 stick, boot unit A (stock .46) via the

@@ -76,6 +76,25 @@ When finished, copy `linux.config` and any defconfig/menuconfig deltas
 **back into this tree** — the container is disposable, the tree is the
 product. `git init` here and commit the defconfig + board dir.
 
+## 2a. dl/ cache overrides — era protocol rot (documented, reproducible)
+
+Two era packages download over `git://`, a protocol upstreams have
+since retired; the build would hang silently forever. Both tarballs
+are staged in the shared `dl/` cache instead — no buildroot source was
+touched (the vendor tree stays pristine):
+
+| package | era URL (dead) | staged from | commit |
+|---|---|---|---|
+| xdriver_xf86-video-intel | `git://anongit.freedesktop.org` | gitlab.freedesktop.org per-commit archive | `b57abe20…` |
+| rtmpdump | `git://git.ffmpeg.org` | `sources.buildroot.net` (buildroot's own era snapshot mirror) | `fa8646da…` |
+
+A fresh build host reproduces this with two curls (URLs are the
+per-commit archive/snapshot forms above). Neither pkg had a `.hash` at
+this era — buildroot warns and accepts; the commit SHAs in the
+filenames are the pin. Verified 2026-10-27: no other selected package
+uses `git://` (audit: all 30 such pkgs cross-checked against the
+generated .config — none selected).
+
 ## 3. Era is load-bearing (read before bumping Buildroot)
 
 Everything below was true of Buildroot ≈2017.08 and is false later:

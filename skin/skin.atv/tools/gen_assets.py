@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Generates every raster asset skin.atv needs — from nothing.
 # Runs at build time (post-build.sh, container python2 or host python3;
 # stdlib only). Output lands in resources/skins/Default/media/.

@@ -188,6 +188,25 @@ Raw findings (expect scripts kept at
   rerun `tools/verify-image.sh`, audit target tree for the skin dir +
   generated `media/*.png` + `fonts/*.ttf`.
 
+## 2026-10-27 (night) — skin rebuild failure: python2 encoding (self-inflicted, instructive)
+
+- First skin rebuild died in post-build: python2.7 rejected
+  `gen_assets.py` — "Non-ASCII character '\xe2' … no encoding declared"
+  (em-dashes in comments; py3 tolerates, py2 demands PEP 263). The
+  pre-commit smoke test ran on the HOST's python3 — wrong interpreter;
+  production is the container's python2. Fix: `# -*- coding: utf-8 -*-`
+  line 2; re-proven INSIDE the container image with python2 2.7.13
+  (5 PNGs, byte-identical to py3's output).
+- The failure is the design working: post-build runs `set -eu`, so a
+  broken asset generator is a build error, never a skinless boot.
+- Same run's audit, otherwise green: skin dir + both userdata files
+  land in target; `DejaVuSans.ttf` + `DejaVuSans-Bold.ttf` present at
+  `/usr/share/fonts/dejavu/`. `/export` image untouched — still
+  `9a8d1598…` (pre-skin).
+- Sentinel lesson: `docker wait c; echo $?` prints wait's own status,
+  not the container's — the "exit: 0" above was a lie. Capture
+  docker wait's STDOUT as the code.
+
 ## Current state / next
 
 - Post-SMB image (`9a8d1598…`) ready to burn; skin rebuild will

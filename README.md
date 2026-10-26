@@ -19,7 +19,9 @@ you own end to end: kernel defconfig → rootfs → disk image.
 **This README is the current truth. [`LOG.md`](LOG.md) is the engineering
 history** — decisions, evidence, every failed build and what it taught,
 including the two hardware premises this project got wrong and how the
-hardware corrected them.
+hardware corrected them. **[`ATV1-SPECS.md`](ATV1-SPECS.md) is the
+hardware record** — fleet inventory with a provenance tag on every line
+(verified / Apple literature / expected-but-unobserved).
 
 ## 1. Repo layout (this directory = br2-external tree)
 

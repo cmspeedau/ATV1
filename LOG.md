@@ -225,6 +225,9 @@ partition on first boot.
   console 57600 8N1 if available; then the Stage-0 checklist on OUR image:
   `lspci -nn`, `ls /dev/fb*`, `dmesg | grep -iE 'i915|drm|sdvo|hdmi'`,
   `ifconfig -a` (which NIC got a link).
+- Docs: three-file split — README (current truth), LOG.md (this history),
+  `ATV1-SPECS.md` (hardware record, every line provenance-tagged
+  [V]erified/[A]pple-literature/[E]xpected-unobserved).
 - Still Unknown (first boot answers all of it): unit A's NIC/GPU (inferred
   same-product, not observed), the 32-bit EFI boot path (the era's biggest
   unknown), SDVO→HDMI quirks on stock, swrast usability at 1 GHz.

@@ -28,10 +28,15 @@ BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh"
 
-# ---- Kernel: 4.14.x — last LTS with staging/crystalhd ----
+# ---- Kernel: 4.13.x — last release WITH staging/crystalhd ----
+# Corrected by evidence, not memory: 4.14.335 was tried first and its
+# drivers/staging has NO crystalhd (removed in the 4.14 merge window,
+# Aug 2017 — the "~4.16" note this tree carried was wrong). 4.13.16 is
+# the newest kernel with the BCM70012 driver in tree, and it predates
+# the retpoline backports, so the era gcc builds it clean.
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
-BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.14.335"
+BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.13.16"
 # Toolchain headers stay at the release's 4.12 (its choice list tops
 # out there): "same as kernel" (the default when a kernel is built)
 # trips this era's consistency check — expected 4.12.x, got 4.14.x.

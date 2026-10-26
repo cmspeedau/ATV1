@@ -77,9 +77,9 @@ Everything below was true of Buildroot ≈2017.08 and is false later:
 
 | Dependency | Why 2017.08-era |
 |---|---|
-| Kodi **17.6** | CrystalHD video accelerator **removed in Kodi 18** |
-| Mesa with **nv40** DRI | classic nv4x driver gone from Mesa ≥ 17.3 → Go 7300 = llvmpipe |
-| kernel **4.14** | `staging/crystalhd` deleted upstream ≈4.16 |
+| Kodi **17.3** | CrystalHD video accelerator **removed in Kodi 18** |
+| Mesa with **nv40-generation** DRI | the classic nv driver (covers nv40) is gone from Mesa ≥ 17.3 → Go 7300 = llvmpipe; the symbol is `_DRI_DRIVER_NOUVEAU` — there never was an `_NV40` one |
+| kernel **4.13.16** | `staging/crystalhd` is **already deleted in 4.14** (observed in 4.14.335 — an earlier note here said "≈4.16"; the hardware tree proved it wrong). 4.13.16 is the newest kernel with the BCM70012 driver in tree, and it predates the retpoline backports that era gcc 6.3 can't satisfy |
 | grub2 **i386-efi** target | ATV1 firmware is 32-bit EFI (like MacBook2,1) |
 | python2 add-ons | this era's add-on ecosystem |
 
@@ -87,25 +87,25 @@ Newer Buildroot = re-creating all five by hand. Don't chase it. If a
 symbol in the defconfig doesn't exist at your era point, `make xconfig`
 and search — names drift; §5 lists the ones to verify.
 
-## 4. Kernel bring-up (one-time, then commit the result)
+## 4. Kernel bring-up (fragment wired — no manual capture)
 
-`linux.fragment` is documentation + input for a one-time merge:
+`board/atv1/linux.fragment` is merged by Buildroot itself on every
+configure: `configs/atv1_defconfig` sets
 
-```sh
-cd /root/out/build/linux-4.14.335
-# Buildroot already ran the i386 defconfig; merge the fragment:
-./scripts/kconfig/merge_config.sh -m .config /root/atv1/board/atv1/linux.fragment
-make oldconfig          # accept defaults on prompts
-# back in Buildroot:
-make O=/root/out linux-update-defconfig \
-  BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE=/root/atv1/board/atv1/linux.config
+```
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.fragment"
 ```
 
-Copy the generated `linux.config` into `board/atv1/`, then in
-`configs/atv1_defconfig` swap the two `BR2_LINUX_KERNEL_USE_*` lines to
-`USE_CUSTOM_CONFIG`. **Never commit Buildroot's `.config`; only this
-fragment + the captured defconfig.** After kernel edits:
-`make O=/root/out linux-rebuild all`.
+— i386 defconfig first, fragment second, `oldconfig` resolves. Edit the
+fragment, rerun `make atv1_defconfig` (or `linux-reconfigure`), rebuild.
+No menuconfig capture, no committed kernel `.config` — the fragment is
+the whole record. Syntax rules learned the hard way:
+
+* disable with the canonical `# CONFIG_X is not set` — a
+  `# CONFIG_X=n` comment does **not** disable anything (this exact
+  form silently "redefined" nothing and left RETPOLINE on);
+* never put `# CONFIG_X=y` "future" lines in a fragment — write prose
+  instead; comment-styled settings are ambiguous to config mergers.
 
 Non-obvious symbols already reasoned through in the fragment:
 

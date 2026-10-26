@@ -213,13 +213,36 @@ likewise made an explicit `image rootfs.ext4 { file { copy = false } }`
 (one mechanism, no undeclared-name fallbacks). `S20datadirs` fills the
 partition on first boot.
 
+## 2026-10-27 — FIRST SUCCESSFUL IMAGE: atv1-disk.img
+
+The whole pipeline went green end to end: defconfig → toolchain (era,
+pentium_m baseline) → kernel 4.9.337 (fleet fragment: i915 + nouveau +
+8139too) → X/Mesa/Kodi 17.3 → rootfs → EFI assembly → genimage disk →
+export. Artifact:
+
+- `~/ATV1/images/atv1-disk.img`, 608 MiB, **SHA-256
+  `6b0c907d5a2eed9643e1f1455d2a8bbaea68b537f1bd2aba6154089dce79a0a0`**
+  (pin of the first-good build; every rebuild since regenerates it).
+- Layout on the bytes (verified, not log-trusted): MBR, P1 vfat `ATV1BOOT`
+  (bzImage + `EFI/BOOT/bootia32.efi` + grub.cfg) bootable, P2 ext rootfs
+  (512 MiB), P3 ext4 `ATV1DATA` (64 MiB, root dir 1024 B = empty).
+- Fact noted: **genimage 9 does not align partitions** — P1 starts at
+  sector 1 (era-contiguous layout). Harmless for 512-byte-sector era
+  disks; noted because modern tools may warn.
+- New `tools/verify-image.sh` re-derives all of it from the image with
+  the era's own binaries (sfdisk/mdir/tune2fs/dumpe2fs/debugfs from
+  `host/bin`). It found three bugs in ITS OWN first drafts (sfdisk
+  `type=` vs `Id=`, mdir's 8.3 space-for-dot rendering, tune2fs's
+  lowercase "volume name", free-blocks-vs-journal as an emptiness test)
+  and zero bugs in the image — which is exactly the arrangement you
+  want when the stakes are a physical boot test.
+
 ## Current state (at last edit of this file)
 
-- Build: resumed in detached container `atv1-build` with the host-tool and
-  content-model fixes. Everything through rootfs + boot.vfat is stamped;
-  this run is data-fs format + genimage assembly + export of
-  `~/ATV1/images/atv1-disk.img`. Sentinel: background `docker wait`.
-  Docker CLI note: `export PATH="$HOME/.docker/bin:$PATH"`.
+- Build: COMPLETE AND VERIFIED — `atv1-disk.img` (608 MiB, sha256
+  `6b0c907d…a0`, see milestone entry above) is staged and byte-checked
+  by `tools/verify-image.sh`. Container `atv1-build` is idle; a rebuild
+  is just `docker rm` + the standard `docker run` line.
 - **Next milestone:** dd to a USB 2.0 stick, boot unit A (stock .46) via the
   32-bit-EFI bypass loader (ATVBootloader / ATV1sm, README §6), serial
   console 57600 8N1 if available; then the Stage-0 checklist on OUR image:

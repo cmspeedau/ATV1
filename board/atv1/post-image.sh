@@ -1,27 +1,36 @@
 #!/bin/sh
 # Assemble the EFI layout and build the whole-disk image.
-# Runs after rootfs.ext4 / bzImage / grub image exist in BINARIES_DIR.
+# Runs after rootfs.ext4 / bzImage / the grub2 efi-part exist in BINARIES_DIR.
 set -eu
 
 BIN_DIR="${BINARIES_DIR:?}"
+BOARD_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Locate the GRUB ia32 EFI image produced by the grub2 package.
-# Buildroot has named this artifact a few different ways across eras:
-#   bootia32.efi, grub_i386_efi.efi, grub_i386-efi.img, core.efi
-GRUB_EFI="$(find "$BIN_DIR" -maxdepth 2 -type f \
-        \( -name 'bootia32.efi' -o -name 'grub*ia32*.efi*' -o -name 'grub*i386*.efi*' -o -name 'grub_i386*img' \) \
-        | head -n1)"
+# This era's grub2 package (BR2_TARGET_GRUB2_I386_EFI) produces a whole
+# EFI system partition skeleton: images/efi-part/EFI/BOOT/bootia32.efi
+# (+ startup.nsh + its own grub.cfg). Observed 2026-10-27; an earlier
+# version of this script searched maxdepth 2 and could never see a file
+# that lives three directories down.
+GRUB_EFI="$(find "$BIN_DIR/efi-part" -maxdepth 4 -type f -name 'bootia32.efi' \
+        2>/dev/null | head -n1)"
 
 if [ -z "$GRUB_EFI" ]; then
-        echo "post-image: no GRUB ia32 EFI image found in $BIN_DIR:" >&2
-        ls -l "$BIN_DIR" >&2
-        echo "Adjust the find(1) names in board/atv1/post-image.sh to match" >&2
-        echo "what 'make' produced for BR2_TARGET_GRUB2_I386_EFI." >&2
+        echo "post-image: no bootia32.efi under $BIN_DIR/efi-part:" >&2
+        ls -lR "$BIN_DIR" >&2
         exit 1
 fi
 
-echo "post-image: installing $GRUB_EFI -> EFI/boot/bootia32.efi"
+# The grub.cfg buildroot generated hardcodes root=/dev/sda1 — wrong for
+# our layout (rootfs is partition 2). Replace it with the board config:
+# internal-vs-USB root entries, rootwait/rootdelay, and console=tty1 +
+# console=ttyS0,57600 (onboard UART = the Stage-0 bring-up console).
+GRUB_CFG_SRC="$BOARD_DIR/../grub-i386-efi.cfg"
+[ -f "$GRUB_CFG_SRC" ] || { echo "post-image: missing $GRUB_CFG_SRC" >&2; exit 1; }
+
+echo "post-image: EFI from $GRUB_EFI, grub.cfg from $GRUB_CFG_SRC"
+rm -rf "$BIN_DIR/EFI"
 mkdir -p "$BIN_DIR/EFI/boot"
 cp -f "$GRUB_EFI" "$BIN_DIR/EFI/boot/bootia32.efi"
+cp -f "$GRUB_CFG_SRC" "$BIN_DIR/EFI/boot/grub.cfg"
 
-exec support/scripts/genimage.sh -c "$(dirname "$0")/genimage.cfg"
+exec support/scripts/genimage.sh -c "$BOARD_DIR/genimage.cfg"

@@ -53,11 +53,21 @@ stories behind entries: LOG.md.
   `file { name = "atv1-data.ext4"; copy = false }` (v9 feeds ext images
   `cp -a --rootpath` = whole rootfs → ENOSPC; `file` embeds raw input).
   post-image.sh + `mkfs.ext4 -F -q -L ATV1DATA atv1-data.ext4 65536`.
-- (uncommitted→) 10-27 — SMB OS-level client: fragment +
+- `ec71426` 10-27 — SMB OS-level client: fragment +
   `CONFIG_CIFS=y`; defconfig + `BR2_PACKAGE_CIFS_UTILS=y`; fstab +
-  commented mount example; README §6a. Client-only by design. Verify
-  merged kernel `.config` after rebuild (silent-drop rule applies to
-  fragments too).
+  commented mount example; README §6a. Client-only by design. AUDITED
+  post-rebuild: merged kernel `.config` has `CONFIG_CIFS=y`, target has
+  `/sbin/mount.cifs` — green.
+- `10e296d` 10-27 — skin.atv v0.1: defconfig + `BR2_PACKAGE_DEJAVU=y`
+  (era package is `dejavu`; later `ttf-dejavu` naming does not exist
+  here — verified in `package/*/Config.in` before setting, silent-drop
+  rule); post-build.sh + skin install → `/root/.kodi/addons/skin.atv/`
+  + `gen_assets.py` run + DejaVu copy via `find` (hard-fails if
+  missing — no silent skinless boot); overlay userdata + `guisettings.xml`
+  (lookandfeel.skin, screensaver/mouse off) + `sources.xml`
+  (`/data/media/*`). Skin itself: `skin/skin.atv/`, GPL-2.0-only, zero
+  Apple assets (rasters generated at build, fonts Bitstream-Vera); no
+  PNGs/TTFs in git (.gitignore). Kernel untouched.
 
 ## Effective config (first-good image, 2026-10-27)
 
@@ -68,9 +78,10 @@ stories behind entries: LOG.md.
 | Kernel | 4.9.337 + headers 4_9 + fragment (`DRM_I915`, `DRM_NOUVEAU`, `DRM_TTM`, `8139TOO`, NIC insurance, retpoline off, STAGING off, EFI_MIXED) |
 | X / GL | XORG7 + intel/nouveau/fbdev + xinit; Mesa 17.1.5 EGL+GLES + `DRI_DRIVER_NOUVEAU` + `GALLIUM_DRIVER_SWRAST` |
 | Kodi | 17.3-Krypton |
+| Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifact | 608 MiB; sha256 `6b0c907d…ce79a0a0` |
+| Artifact | 608 MiB; post-SMB sha256 `9a8d1598…c6f59cbfe79d` (pre-skin — re-pin when the skin rebuild lands) |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

@@ -99,3 +99,12 @@ CONFIG_THERMAL=y
 # CONFIG_SQUASHFS_LZ4=y
 # CONFIG_OVERLAY_FS=y
 # CONFIG_ZRAM=y
+
+# ---- Era-compiler reality ----
+# CONFIG_RETPOLINE=n
+# Linux 4.14.335 backported the Spectre-RSB/retpoline archprepare check,
+# which hard-fails on the era gcc 6.3 ("Please update your compiler").
+# The mitigation needs gcc >= 7 thunks; this build is pinned to era
+# toolchain on purpose, so the mitigation is OFF and named here, not
+# silently dropped. Revive with a newer compiler only if the era pin
+# is ever renegotiated.

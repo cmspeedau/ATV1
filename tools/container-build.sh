@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Runs INSIDE atv1-build:stretch (tools/Dockerfile.build).
 # Idempotent: /work is a docker volume, so an interrupted build resumes.
 #
@@ -6,7 +6,11 @@
 #     -v ~/ATV1:/atv1-src:ro -v ~/ATV1/images:/export \
 #     -v atv1-work:/work atv1-build:stretch \
 #     /atv1-src/tools/container-build.sh
-set -eu
+#
+# pipefail matters: without it, a failing `make | tee` looks like
+# success and the script reports "finished" on a broken build (seen
+# 2026-10-26: kernel archprepare error was masked, FAIL line lied).
+set -euo pipefail
 
 BR=/work/buildroot
 EXT=/work/atv1

@@ -35,8 +35,9 @@ BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh
 # listing: absent from 4.9.337 (stable backported the removal),
 # 4.11.12, 4.12.14, 4.13.16 and 4.14.335. 4.9 is Buildroot 2017.08's
 # LTS: old enough for era gcc, new enough for i915 KMS + EFI + SDVO.
-# A card added later gets its driver from an out-of-tree module, not
-# from a kernel archaeology dig (see linux.fragment prose).
+# A card added later gets its driver from the verified in-tree source
+# — the kernel flips to 3.16.85, the last release carrying it (see the
+# card plan in board/atv1/linux.fragment). Not today: no card.
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.9.337"
@@ -91,10 +92,11 @@ BR2_PACKAGE_PYTHON_PY_PYC=y
 BR2_PACKAGE_KODI=y
 # BR2_PACKAGE_CRYSTALHD stays OFF: the box has no BCM70012 card, so
 # software decode is the honest envelope (SD / easy 720p). The package
-# stays in the tree dormant; the path to a card later is: mini-PCIe
-# BCM70012 -> LibreELEC out-of-tree kernel module -> pin this package's
-# (currently 404-ing) download and rebuild Kodi 17. The era pin remains
-# justified: 18 removed CrystalHD support entirely.
+# is dormant but alive: mirror repointed to crystalhd-arch (verified
+# tarball, sha512 recorded in .hash). Card path when one arrives: flip
+# the kernel to 3.16.85 per linux.fragment, enable here, wire
+# KODI_DEPENDENCIES (see crystalhd.mk). Era pin stays justified: 18
+# removed CrystalHD support entirely.
 
 # ---- Utilities ----
 BR2_PACKAGE_ALSA_UTILS=y

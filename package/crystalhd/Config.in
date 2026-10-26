@@ -8,12 +8,12 @@ config BR2_PACKAGE_CRYSTALHD
 	  CrystalHD hardware H.264/MPEG-2 decoder: a mini-PCIe add-on
 	  card (the famous A1218 mod), NOT onboard hardware, and not
 	  installed in this project's box — this package is dormant.
-	  Note the in-kernel staging driver is gone from every reachable
-	  kernel (verified absent from 4.9.337 and >= 4.11.12); a card
-	  today needs LibreELEC's out-of-tree kernel module, so enabling
-	  this package alone does not give acceleration.
+	  Kernel driver reality (verified against the kernel repos):
+	  in-tree through Linux 3.16.x (final stable 3.16.85 still has
+	  it), removed in 3.17; newer kernels only via crystalhd-arch's
+	  maintained dkms port. Card path plan: board/atv1/linux.fragment.
 
-	  https://github.com/LibreELEC/crystalhd
+	  https://github.com/crystalhd-arch/libcrystalhd
 
 comment "crystalhd needs an x86 glibc toolchain"
 	depends on !(BR2_i386 || BR2_x86_64) || !BR2_TOOLCHAIN_USES_GLIBC

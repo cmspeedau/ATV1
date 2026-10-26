@@ -1,0 +1,4 @@
+# Locally verified 2026-10-27: sha512 of the crystalhd-arch v20131127
+# GitHub tarball, identical to the AUR libcrystalhd record for the same
+# artifact. (Filename follows buildroot's github download method.)
+sha512 28009f24a92d7e6969a2f05ac65712fbd1511880a3c7b3fe1d01d81f7500f86985e9bb86b56047508e651fef5d1cef19aadb9ec844d9a83dba76ea02c14b2af0  crystalhd-v20131127.tar.gz

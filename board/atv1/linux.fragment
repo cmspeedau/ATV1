@@ -8,12 +8,17 @@
 # ============================================================
 
 # ---- Optional hardware: Broadcom BCM70012 CrystalHD (NOT INSTALLED) ----
-# The owner's A1218 has no CrystalHD card; historically it was an
-# add-on mini-PCIe mod, never onboard. The in-tree staging driver is
-# gone from every kernel reachable here (verified absent: 4.9.337,
-# 4.11.12, 4.12.14, 4.13.16, 4.14.335). If a card is ever installed,
-# the driver comes from LibreELEC's out-of-tree module — do not chase
-# an in-tree kernel and do not re-add CONFIG_CRYSTALHD here.
+# Verified against the kernel repos (raw fetches, 2026-10-27): the
+# driver is in-tree through Linux 3.16 — the FINAL stable 3.16.85
+# still carries CONFIG_CRYSTALHD (plain "depends on PCI", no BROKEN
+# gate) — and was deleted in 3.17. The box has no card today; if the
+# owner's mini-PCIe card arrives, the plan is a kernel flip to 3.16.85
+# (the last config with the driver in tree, the one the 2009-2013 mods
+# actually ran): headers -> 3.16, re-add CONFIG_STAGING=y +
+# CONFIG_CRYSTALHD=y here, enable package/crystalhd (mirror alive,
+# hash recorded). A backport of crystalhd-arch's dkms port (targets
+# 4.19+) to 4.9 is the fallback if the 3.16 flip ever proves
+# unworkable. Until then: software decode, no staging.
 
 # ---- GPU: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
 CONFIG_DRM=y

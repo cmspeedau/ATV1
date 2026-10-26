@@ -114,9 +114,10 @@ the whole record. Syntax rules learned the hard way:
 
 Non-obvious symbols already reasoned through in the fragment:
 
-* crystalhd: **nothing to enable** — no card, no in-tree driver anywhere
-  reachable; card support later = LibreELEC out-of-tree module (fragment
-  prose), not a kernel downgrade
+* crystalhd: **nothing to enable today** (no card). Verified plan for
+  when one arrives: kernel flips to 3.16.85 — the last in-tree home of
+  CONFIG_CRYSTALHD (driver deleted in 3.17) — plus the alive
+  crystalhd-arch userspace mirror (hash recorded) (fragment prose)
 * `CONFIG_DRM_I915=y` — GMA950 is the A1218's only GPU; HDMI rides an
   SDVO bridge (2007 hotplug quirks = Stage-0 watch item). The earlier
   "7300 owns HDMI, never enable i915" bullet was wrong for this machine
@@ -146,11 +147,12 @@ Era names drift; verify these exist/enabled after `atv1_defconfig`:
       read ext4 extents.
 - [ ] `eudev` (default on) — device nodes for what's actually present
       (no `/dev/crystalhd` unless a card was added).
-- [ ] `crystalhd` (this tree) — **dormant, do not enable**: no card in
-      the box, and its master download 404s since 2026-10-27 (repo gone
-      or branch renamed — find the fork's home and pin a commit before
-      ever enabling). A card also needs LibreELEC's out-of-tree kernel
-      module; only then would Kodi 17 link libcrystalhd from staging.
+- [ ] `crystalhd` (this tree) — **dormant, do not enable yet**: no card
+      in the box. Mirror is alive and verified (crystalhd-arch,
+      sha512 in `crystalhd.hash`). When a card arrives: flip kernel to
+      3.16.85 (last in-tree driver), enable the package, add
+      `KODI_DEPENDENCIES += crystalhd`, rebuild Kodi and CHECK its
+      configure log for crystalhd pickup — never assume it.
 
 ## 6. Booting the box
 

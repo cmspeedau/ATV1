@@ -116,10 +116,15 @@ BR2_PACKAGE_GPTFDISK=y
 BR2_PACKAGE_GPTFDISK_SGDISK=y
 
 # ---- Host tools genimage 9 shells out to (learned at 03:00 by absence) ----
-# vfat images: mkdosfs from dosfstools; file injection: mcopy/mmd from mtools.
-# Both are option strings in genimage 9's own source.
+# vfat images: mkdosfs from dosfstools; file injection: mcopy/mmd from mtools;
+# ext content images: genext2fs; ext labels: tune2fs (e2fsprogs). All four
+# are execl'd by genimage 9's own source; era genimage.mk declares none of
+# them. NOTE genext2fs has no HOST_-only symbol this era — enabling it
+# selects target+host, so the binary also lands on the appliance (fine:
+# 40 KB, and it's legitimate disk-surgery kit alongside resize2fs).
 BR2_PACKAGE_HOST_DOSFSTOOLS=y
 BR2_PACKAGE_HOST_MTOOLS=y
+BR2_PACKAGE_GENEXT2FS=y
 
 # ---- Appliance client (ARCHITECTURE doc): Rust, built out-of-era against
 # the Buildroot SDK — see tools/build-client.sh. Default-off until the

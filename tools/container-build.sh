@@ -26,6 +26,18 @@ mkdir -p "$EXT"
 rsync -a --delete --exclude='images/' --exclude='.git/' /atv1-src/ "$EXT/"
 
 make -C "$BR" O="$OUT" BR2_EXTERNAL="$EXT" BR2_DL_DIR="$DL" atv1_defconfig
+
+# Explicitly prebuild the host tools genimage 9 execs at post-image time
+# (genext2fs, tune2fs via e2fsprogs, mkdosfs via dosfstools, mcopy/mmd
+# via mtools). Root lesson from two 'not found' failures: this era's
+# buildroot only instantiates a package's rules when its .config symbol
+# is enabled (HOST_GENIMAGE_DEPENDENCIES pointing at an uninstantiated
+# package is a phantom), and relying on the dependency graph to order
+# these against post-image is subtle. Forcing them here is idempotent
+# (no-op once their stamps exist) and makes post-image deterministic.
+make -C "$BR" O="$OUT" BR2_EXTERNAL="$EXT" BR2_DL_DIR="$DL" \
+  host-genext2fs host-e2fsprogs host-dosfstools host-mtools
+
 make -C "$BR" O="$OUT" BR2_DL_DIR="$DL" -j"$(nproc)" 2>&1 | tee "$LOG"
 
 # hand the artifact back; genimage writes atv1-disk.img under images/

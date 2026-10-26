@@ -11,7 +11,10 @@ set -eu
 
 # Prebuilt Rust client (ARCHITECTURE doc; era Buildroot has no rustc —
 # see package/atv1-client/Config.in and tools/build-client.sh).
-if [ "${BR2_PACKAGE_ATV1_CLIENT}" = "y" ]; then
+# NOTE the :- default: unselected BR2_ options are UNSET in the
+# post-build environment, and set -u makes a bare ${VAR} an instant
+# fatal error (this exact mistake killed target-finalize 2026-10-27).
+if [ "${BR2_PACKAGE_ATV1_CLIENT:-}" = "y" ]; then
         CLIENT="${BR2_EXTERNAL_ATV1_PATH:-}/client/atv1-client"
         if [ -f "$CLIENT" ]; then
                 install -m 0755 "$CLIENT" "$TARGET_DIR/usr/bin/atv1-client"

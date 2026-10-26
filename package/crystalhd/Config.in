@@ -5,9 +5,13 @@ config BR2_PACKAGE_CRYSTALHD
 	select BR2_PACKAGE_LINUX_HEADERS
 	help
 	  Userspace library and utilities for the Broadcom BCM70012
-	  CrystalHD hardware H.264/MPEG-2 decoder, as found onboard the
-	  Apple TV 1st generation (A1218). Requires the in-kernel staging
-	  crystalhd driver (Linux <= 4.15, CONFIG_CRYSTALHD=y).
+	  CrystalHD hardware H.264/MPEG-2 decoder: a mini-PCIe add-on
+	  card (the famous A1218 mod), NOT onboard hardware, and not
+	  installed in this project's box — this package is dormant.
+	  Note the in-kernel staging driver is gone from every reachable
+	  kernel (verified absent from 4.9.337 and >= 4.11.12); a card
+	  today needs LibreELEC's out-of-tree kernel module, so enabling
+	  this package alone does not give acceleration.
 
 	  https://github.com/LibreELEC/crystalhd
 

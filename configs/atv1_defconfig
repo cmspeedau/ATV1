@@ -16,8 +16,8 @@ BR2_x86_pentium_m=y
 # silently dropped by kconfig — this exact mistake hid Kodi/Mesa/Xorg
 # from the first defconfig run.
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
-# glibc, not uClibc: crystalhd userspace depends on it, and the Rust
-# appliance client targets i586-unknown-linux-gnu.
+# glibc, not uClibc: the Rust appliance client targets
+# i586-unknown-linux-gnu — a gnu triple.
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
 
@@ -28,50 +28,59 @@ BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh"
 
-# ---- Kernel: 4.13.x — last release WITH staging/crystalhd ----
-# Corrected by evidence, not memory: 4.14.335 was tried first and its
-# drivers/staging has NO crystalhd (removed in the 4.14 merge window,
-# Aug 2017 — the "~4.16" note this tree carried was wrong). 4.13.16 is
-# the newest kernel with the BCM70012 driver in tree, and it predates
-# the retpoline backports, so the era gcc builds it clean.
+# ---- Kernel: 4.9.x LTS — the era's own LTS of record ----
+# CrystalHD no longer drives this choice, because the box has NO
+# BCM70012 card (owner-confirmed) — and the in-tree staging driver is
+# gone from every kernel reachable here anyway, verified by tarball
+# listing: absent from 4.9.337 (stable backported the removal),
+# 4.11.12, 4.12.14, 4.13.16 and 4.14.335. 4.9 is Buildroot 2017.08's
+# LTS: old enough for era gcc, new enough for i915 KMS + EFI + SDVO.
+# A card added later gets its driver from an out-of-tree module, not
+# from a kernel archaeology dig (see linux.fragment prose).
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
-BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.13.16"
-# Toolchain headers stay at the release's 4.12 (its choice list tops
-# out there): "same as kernel" (the default when a kernel is built)
-# trips this era's consistency check — expected 4.12.x, got 4.14.x.
-# glibc capped at 4.12 UAPI under a 4.14 kernel is the normal
-# old-userland/new-kernel pairing; CrystalHD is a kernel-side symbol
-# and unaffected.
-BR2_KERNEL_HEADERS_4_12=y
-# x86 i386 defconfig + this board's fragment (crystalhd staging, fb,
-# NIC candidates). The fragment re-applies on every defconfig run —
+BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="4.9.337"
+# Headers pinned to the same LTS. (The 4.12 choice existed only to
+# satisfy the consistency check of the abandoned 4.14 attempt.)
+BR2_KERNEL_HEADERS_4_9=y
+# x86 i386 defconfig + this board's fragment (i915, fb, NIC
+# candidates). The fragment re-applies on every defconfig run —
 # no menuconfig capture step needed (README §4).
 BR2_LINUX_KERNEL_USE_DEFCONFIG=y
 BR2_LINUX_KERNEL_DEFCONFIG="i386"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.fragment"
 
-# ---- Graphics: Go 7300 via nouveau (NOT the 945GM's GMA950) ----
+# ---- Graphics: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
+# The old "GeForce Go 7300 owns HDMI, never enable i915" story was
+# wrong for this machine — Mac1,1 carries no NVIDIA silicon — and it
+# would have disabled i915 on the only GPU it has: black screen.
+# Purged 2026-10-27; `lspci` on the hardware confirms at Stage-0.
 # 2017.08-era X11 umbrella symbol (BR2_PACKAGE_XORG_SERVER is a later
 # naming; kconfig silently drops assignments to unknown symbols).
 BR2_PACKAGE_XORG7=y
 # xinit and the driver menu hang off the server symbol in this layout.
 BR2_PACKAGE_XSERVER_XORG_SERVER=y
-BR2_PACKAGE_XDRIVER_XF86_VIDEO_NOUVEAU=y
+# Intel DDX: the era-correct X driver for GMA950 on KMS (this era has
+# no modesetting driver package).
+BR2_PACKAGE_XDRIVER_XF86_VIDEO_INTEL=y
+# fbdev stays as the Stage-0 fallback if the SDVO->HDMI path misbehaves.
+BR2_PACKAGE_XDRIVER_XF86_VIDEO_FBDEV=y
 BR2_PACKAGE_XAPP_XINIT=y
 BR2_PACKAGE_MESA3D=y
 # Kodi's visibility needs HAS_LIBEGL (+LIBGL): Mesa's EGL/GLES APIs are
-# explicit options in this era. With classic DRI this is Mesa's
-# egl-dri2 backend — whether Kodi's runtime prefers GLX or EGL on nv40
-# is a Stage-1 observation, but the build gate needs these flags set.
+# explicit options in this era; whether Kodi's runtime prefers GLX or
+# EGL is a Stage-1 observation, but the build gate needs these flags.
 BR2_PACKAGE_MESA3D_OPENGL_EGL=y
 BR2_PACKAGE_MESA3D_OPENGL_ES=y
-# The nv40 generation gets DRI through Mesa 17.1's NOUVEAU classic
-# driver (there is no _NV40 symbol); this support is gone from
-# Mesa >= 17.3 — pinned by this Buildroot's 17.1.5 (README §5).
-BR2_PACKAGE_MESA3D_DRI_DRIVER_NOUVEAU=y
+# Software GL — named, not smuggled. Mesa 17.1 DELETED the classic
+# i915 driver, so this era's _DRI_DRIVER_I915 option is stale (picking
+# it would break Mesa's configure); i915g gallium and llvm/llvmpipe
+# are not exposed by this buildroot at all. Gallium swrast = GL 2.1 in
+# software, exactly Kodi 17's floor. Whether 1 GHz + 256 MB drives it
+# acceptably is a Stage-0 observation, not a claim.
+BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_SWRAST=y
 
-# ---- Media: Kodi 17 + CrystalHD userspace (removed in Kodi 18!) ----
+# ---- Media: Kodi 17 (last release with CrystalHD support — see note) ----
 # Kodi is visible only once python2 carries .py modules (its own gate
 # comment): BR2_PACKAGE_PYTHON is this era's python2 symbol, and the
 # era default installs .pyc ONLY — which the gate rejects, so the
@@ -80,7 +89,12 @@ BR2_PACKAGE_MESA3D_DRI_DRIVER_NOUVEAU=y
 BR2_PACKAGE_PYTHON=y
 BR2_PACKAGE_PYTHON_PY_PYC=y
 BR2_PACKAGE_KODI=y
-BR2_PACKAGE_CRYSTALHD=y
+# BR2_PACKAGE_CRYSTALHD stays OFF: the box has no BCM70012 card, so
+# software decode is the honest envelope (SD / easy 720p). The package
+# stays in the tree dormant; the path to a card later is: mini-PCIe
+# BCM70012 -> LibreELEC out-of-tree kernel module -> pin this package's
+# (currently 404-ing) download and rebuild Kodi 17. The era pin remains
+# justified: 18 removed CrystalHD support entirely.
 
 # ---- Utilities ----
 BR2_PACKAGE_ALSA_UTILS=y

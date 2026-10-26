@@ -25,5 +25,11 @@ CRYSTALHD_AUTORECONF = YES
 # git tarballs. After the first successful download, pin
 # CRYSTALHD_VERSION to the commit SHA you actually received and record
 # the sha256 from dl/ into a .hash file for reproducibility.
+#
+# 2026-10-27, observed: the master-archive download 404s (repo gone or
+# branch renamed). This package is DORMANT (no card in the box), so the
+# dead URL blocks nothing; before ever enabling it, find the fork's
+# current home and pin a commit. See also Config.in: the kernel-side
+# driver needs LibreELEC's out-of-tree module, not an in-tree kernel.
 
 $(eval $(autotools-package))

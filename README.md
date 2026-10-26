@@ -1,13 +1,18 @@
 # ATV1 — Buildroot Kodi appliance for the Apple TV 1st gen (A1218)
 
-Pentium M "Crofton" 1 GHz · **NVIDIA GeForce Go 7300** (64 MB) ·
-**Broadcom BCM70012 CrystalHD** (1080p H.264 HW decode) · 256 MB RAM ·
-10/100 Ethernet · 2× USB 2.0 · 2.5" SATA · 32-bit EFI · dead-silent.
+Pentium M "Crofton" 1 GHz · **Intel GMA950** (i945GMS — the only GPU
+Mac1,1 has) · 256 MB RAM · 10/100 Ethernet · 2× USB 2.0 · 2.5" SATA ·
+32-bit EFI · dead-silent. No CrystalHD card in this box (it was always
+a mini-PCIe add-on, never onboard).
 
-The idea: a fully source-built, vendor-lock-in-free Kodi box. Kodi 17
-(Krypton) + CrystalHD = hardware 1080p H.264/MPEG-2. Buildroot keeps the
-whole userspace inside 256 MB. This is a hand-rolled LibreELEC-7-era
-image you own end to end: kernel defconfig → rootfs → disk image.
+The idea: a fully source-built, vendor-lock-in-free Kodi box. With no
+decoder card, H.264 is software work for a 1 GHz Celeron M — the honest
+envelope is SD and easy 720p, and that is what ships as the claim. The
+era pin to Kodi 17.3 stays because 17 is the last release with CrystalHD
+support: if a BCM70012 mini-PCIe card is ever added (the famous 1080p
+mod), 18-and-later can't use it at all. Buildroot keeps the whole
+userspace inside 256 MB. This is a hand-rolled LibreELEC-7-era image
+you own end to end: kernel defconfig → rootfs → disk image.
 
 ## 1. Repo layout (this directory = br2-external tree)
 
@@ -27,7 +32,7 @@ board/atv1/
     etc/atv1/startkodi.sh                 startx + kodi -fs
     etc/asound.conf.example               HDMI audio default, S/PDIF noted
     root/.kodi/userdata/advancedsettings.xml   RAM-tuned Kodi 17
-package/crystalhd/                        LibreELEC-maintained BCM70012 userspace
+package/crystalhd/                        LibreELEC-maintained BCM70012 userspace (dormant — no card)
 package/atv1-client/                      prebuilt Rust client hook (config only)
 tools/build-client.sh                     out-of-era Rust cross-build vs era SDK
 client/                                   ← convention path for the built binary (untracked)
@@ -77,9 +82,9 @@ Everything below was true of Buildroot ≈2017.08 and is false later:
 
 | Dependency | Why 2017.08-era |
 |---|---|
-| Kodi **17.3** | CrystalHD video accelerator **removed in Kodi 18** |
-| Mesa with **nv40-generation** DRI | the classic nv driver (covers nv40) is gone from Mesa ≥ 17.3 → Go 7300 = llvmpipe; the symbol is `_DRI_DRIVER_NOUVEAU` — there never was an `_NV40` one |
-| kernel **4.13.16** | `staging/crystalhd` is **already deleted in 4.14** (observed in 4.14.335 — an earlier note here said "≈4.16"; the hardware tree proved it wrong). 4.13.16 is the newest kernel with the BCM70012 driver in tree, and it predates the retpoline backports that era gcc 6.3 can't satisfy |
+| Kodi **17.3** | last release with the CrystalHD accelerator (**removed in 18**) — pays off only if a card is added later |
+| Mesa **gallium swrast** | GMA950 has no buildable hardware GL in this combo: Mesa 17.1 deleted the classic i915 driver (buildroot's `_DRI_DRIVER_I915` option is stale — picking it breaks configure), and neither i915g nor llvm/llvmpipe exist in this buildroot. swrast = GL 2.1 software, exactly Kodi 17's floor |
+| kernel **4.9.x LTS** | Buildroot 2017.08's own LTS. NOT pinned by CrystalHD anymore — no card is installed, and the in-tree staging driver is verified absent from 4.9.337 and every later era kernel (an earlier note here claimed the kernel was chosen for crystalhd; the hardware inventory proved that moot) |
 | grub2 **i386-efi** target | ATV1 firmware is 32-bit EFI (like MacBook2,1) |
 | python2 add-ons | this era's add-on ecosystem |
 
@@ -109,9 +114,13 @@ the whole record. Syntax rules learned the hard way:
 
 Non-obvious symbols already reasoned through in the fragment:
 
-* `CONFIG_CRYSTALHD=y` **built-in** — /dev/crystalhd exists before Kodi starts
-* `# CONFIG_DRM_I915 is not set` — the 945GUX northbridge carries a GMA950;
-  X must bind the 7300 (which owns the HDMI port), never the iGPU
+* crystalhd: **nothing to enable** — no card, no in-tree driver anywhere
+  reachable; card support later = LibreELEC out-of-tree module (fragment
+  prose), not a kernel downgrade
+* `CONFIG_DRM_I915=y` — GMA950 is the A1218's only GPU; HDMI rides an
+  SDVO bridge (2007 hotplug quirks = Stage-0 watch item). The earlier
+  "7300 owns HDMI, never enable i915" bullet was wrong for this machine
+  and would have guaranteed a black screen
 * `ATA_PIIX` **and** `SATA_AHCI` — 2007 firmware may present either mode
 * NIC: broadnet of 2007 candidates (e1000/tg3/bnx2/sky2/r8169) — enable all,
   `dmesg | grep -i eth` tells you which is real, then prune
@@ -121,8 +130,10 @@ Non-obvious symbols already reasoned through in the fragment:
 
 Era names drift; verify these exist/enabled after `atv1_defconfig`:
 
-- [ ] `MESA3D` → GLX (desktop GL) enabled; **nv40 DRI driver** present.
-      Missing nv40? Drop to Buildroot **2017.05** or **2016.11**.
+- [ ] `MESA3D` → gallium **swrast** driver selected. There is no
+      hardware GL option for GMA950 in this era — if `_DRI_DRIVER_I915`
+      looks tempting, it is stale: Mesa 17.1 can no longer build that
+      driver. Kodi refuses GL < 2.0; swrast is the only honest GL here.
 - [ ] `xinit` (provides `startx`) — symbol name is `BR2_PACKAGE_XINIT`
       here; search if it moved.
 - [ ] `kodi` → python bindings on; a default **skin** addon selected
@@ -133,11 +144,13 @@ Era names drift; verify these exist/enabled after `atv1_defconfig`:
       If your era predates grub2: use `BR2_TARGET_GRUB=y` (legacy),
       `board/grub-bios.cfg`, ext2 (not ext4) rootfs — grub-legacy can't
       read ext4 extents.
-- [ ] `eudev` (default on) — creates `/dev/crystalhd` automatically.
-- [ ] `crystalhd` (this tree) — **after first successful download, pin
-      `CRYSTALHD_VERSION` in package/crystalhd/crystalhd.mk to the actual
-      commit and add a `.hash`.** Kodi links libcrystalhd from staging;
-      if it built before crystalhd: `make crystalhd kodi-dirclean all`.
+- [ ] `eudev` (default on) — device nodes for what's actually present
+      (no `/dev/crystalhd` unless a card was added).
+- [ ] `crystalhd` (this tree) — **dormant, do not enable**: no card in
+      the box, and its master download 404s since 2026-10-27 (repo gone
+      or branch renamed — find the fork's home and pin a commit before
+      ever enabling). A card also needs LibreELEC's out-of-tree kernel
+      module; only then would Kodi 17 link libcrystalhd from staging.
 
 ## 6. Booting the box
 
@@ -167,7 +180,9 @@ For path 1: the A1218's firmware verifies its own EFI binaries until you unlock 
 4. First boot: watch over **serial** (UART header mod, 57600 8N1) or any
    HDMI display. GRUB menu → pick the USB entry (root=sdb2/sdc2).
 5. Expected: `login:` on serial, Kodi fullscreen on HDMI.
-   `ps aux | grep kodi`, `ls /dev/crystalhd`, `dmesg | grep -iE 'nouveau|7300'`
+   `ps aux | grep kodi`, `lspci -nn | grep -i vga` (expect Intel
+   82945G/GZ — GMA950), `dmesg | grep -iE 'i915|drm|sdvo|hDMI'`,
+   `ls /dev/fb*`. No /dev/crystalhd unless a card was actually added
    — confirm which NIC got a link with `ifconfig -a`.
 
 Iterate: edit tree → re-copy into container → `make O=/root/out all`

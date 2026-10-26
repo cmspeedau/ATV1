@@ -1,26 +1,29 @@
 # ============================================================
-# ATV1 kernel fragment — merge into the i386 defconfig via
-#   cd output/build/linux-4.14.335
-#   ./scripts/kconfig/merge_config.sh -m .config <this file>
-#   make oldconfig
-# then capture with `make linux-update-defconfig` (README §4).
+# ATV1 kernel fragment — merged AUTOMATICALLY by Buildroot on
+# every configure, via BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES
+# (README §4). Syntax: disable = canonical
+# "# CONFIG_X is not set"; a "# CONFIG_X=n" comment disables
+# NOTHING (proven); future items live as prose, never as
+# comment-styled settings.
 # ============================================================
 
-# ---- Broadcom BCM70012 CrystalHD H.264 decoder (the whole point) ----
-# Staging driver, removed from Linux ~4.16. Built-in so Kodi can open
-# /dev/crystalhd the instant it starts.
-CONFIG_STAGING=y
-CONFIG_CRYSTALHD=y
+# ---- Optional hardware: Broadcom BCM70012 CrystalHD (NOT INSTALLED) ----
+# The owner's A1218 has no CrystalHD card; historically it was an
+# add-on mini-PCIe mod, never onboard. The in-tree staging driver is
+# gone from every kernel reachable here (verified absent: 4.9.337,
+# 4.11.12, 4.12.14, 4.13.16, 4.14.335). If a card is ever installed,
+# the driver comes from LibreELEC's out-of-tree module — do not chase
+# an in-tree kernel and do not re-add CONFIG_CRYSTALHD here.
 
-# ---- GPU: GeForce Go 7300 via DRM/nouveau ----
+# ---- GPU: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
 CONFIG_DRM=y
-CONFIG_DRM_NOUVEAU=y
-CONFIG_DRM_TTM=y
-# 945GUX northbridge also exposes an integrated GMA950. NEVER enable
-# i915: X must bind to the 7300 that feeds the HDMI port.
-# CONFIG_DRM_I915 is not set
-# Legacy fbdev nv driver would fight nouveau for the same card:
-# CONFIG_FB_NVIDIA is not set
+CONFIG_DRM_I915=y
+# CONFIG_DRM_NOUVEAU is not set
+# Old claim purged 2026-10-27: "GeForce Go 7300 owns the HDMI port,
+# never enable i915" — Mac1,1 has no NVIDIA silicon; that line would
+# have disabled the driver for the only GPU and given a black screen.
+# HDMI comes out via an SDVO bridge; 2007 Apple SDVO hotplug quirks
+# are a named Stage-0 observation (verify with lspci/dmesg on hardware).
 CONFIG_X86_PAT=y
 
 # ---- Boot / console ----
@@ -102,9 +105,8 @@ CONFIG_THERMAL=y
 
 # ---- Era-compiler reality ----
 # CONFIG_RETPOLINE is not set
-# Spectre-RSB retpoline checks (backported into 4.14/4.9 stable)
-# hard-fail on era gcc 6.3, which lacks -mfunction-return=thunk
-# (needs gcc >= 7). Under the adopted 4.13.16 this line is a no-op
-# (the symbol doesn't exist yet there) — it stays as an honest guard
-# and named decision if the kernel is ever moved forward. The
-# mitigation is OFF by era pin, not silently dropped.
+# LOAD-BEARING: 4.9.337 carries the backported Spectre-RSB retpoline
+# machinery, whose archprepare check hard-fails on era gcc 6.3 (it
+# needs -mfunction-return=thunk, gcc >= 7). The mitigation is OFF by
+# era pin, named here, and verified off in the merged .config — never
+# silently dropped.

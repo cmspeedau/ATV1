@@ -207,12 +207,26 @@ Raw findings (expect scripts kept at
   not the container's — the "exit: 0" above was a lie. Capture
   docker wait's STDOUT as the code.
 
+## 2026-10-27 (night) — skin image green; burn candidate pinned
+
+- Skin rebuild: container exit 0. New artifact: 609 MiB, sha256
+  `396dce1bd4f789b3df88e601c3310180b02679340d4d068811e47540e2cd1f07`
+  (supersedes post-SMB `9a8d1598…`, pre-skin).
+- `tools/verify-image.sh`: ALL OK — MBR (P1 0xC bootable), P1 has
+  bzImage + bootia32.efi + grub.cfg, P2 ext rootfs, P3 ATV1DATA 64 MiB
+  empty.
+- Deeper than the verifier (its checks stop at partition metadata):
+  `debugfs` (era host bin) on the extracted P2 proves inside the IMAGE:
+  `/root/.kodi/addons/skin.atv/{addon.xml,xml,media,fonts,tools}` —
+  `fonts/DejaVuSans.ttf` Size 757076, `media/stage.png` Size 367;
+  `/root/.kodi/userdata/{guisettings,sources,advancedsettings}.xml`.
+  Skin present in the burned bytes, not just the staging dir.
+
 ## Current state / next
 
-- Post-SMB image (`9a8d1598…`) ready to burn; skin rebuild will
-  re-pin the sha when it lands. Next milestone: USB boot of unit A
-  (README §5): answers the 32-bit EFI path, unit A NIC/GPU, SDVO
-  behavior, and whether skin.atv renders on swrast at 1 GHz
+- Skin image `396dce1b…` ready to burn. Next milestone: USB boot of
+  unit A (README §5): answers the 32-bit EFI path, unit A NIC/GPU,
+  SDVO behavior, and whether skin.atv renders on swrast at 1 GHz
   (`~/.kodi/temp/kodi.log` for skin errors). Then unit B run with
   the xstartup GPU-select (roadmap).
 - Parked: pentium4 rebuild; DESIGN-LANGUAGE.md (iCraftMusic, uncommitted);

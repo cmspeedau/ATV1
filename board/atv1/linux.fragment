@@ -26,15 +26,19 @@
 # the real card: 0x14e4:0x1612. Until a card is in: software decode,
 # no staging.
 
-# ---- GPU: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
+# ---- GPU: BOTH, because the fleet is heterogeneous (ioreg-proven) ----
+# Unit A (stock .46): Intel GMA950 only. Unit B (mod .8): mini-PCIe
+# GeForce Go 7300 (10de:01d7, Apple subsystem) behind a PCIe bridge,
+# owning that unit's HDMI. Both DRM drivers built-in; per-unit screen
+# choice is an xstartup concern (README TODO), not a kernel one.
 CONFIG_DRM=y
 CONFIG_DRM_I915=y
-# CONFIG_DRM_NOUVEAU is not set
-# Old claim purged 2026-10-27: "GeForce Go 7300 owns the HDMI port,
-# never enable i915" — Mac1,1 has no NVIDIA silicon; that line would
-# have disabled the driver for the only GPU and given a black screen.
-# HDMI comes out via an SDVO bridge; 2007 Apple SDVO hotplug quirks
-# are a named Stage-0 observation (verify with lspci/dmesg on hardware).
+CONFIG_DRM_NOUVEAU=y
+CONFIG_DRM_TTM=y
+# History, since this file flip-flopped: an early draft disabled i915
+# "because the 7300 owns HDMI" (true of unit B, false of A); a later
+# draft purged nouveau "because Mac1,1 has no NVIDIA" (true of unit A,
+# false of B). Evidence from both units' ioreg ended the argument.
 CONFIG_X86_PAT=y
 
 # ---- Boot / console ----
@@ -71,8 +75,12 @@ CONFIG_PROC_FS=y
 CONFIG_SYSFS=y
 CONFIG_TMPFS=y
 
-# ---- Network: Apple's 945-era NIC is one of these; cheap insurance ----
+# ---- Network: PROVEN on unit B (ioreg): Realtek RTL8139 (10ec:8139) ----
+# None of the five "likely 2007" candidates below matches that chip —
+# 8139too is the driver. Candidates stay as cheap insurance until unit
+# A's NIC is eyeballed (same product line, so expect the same 8139).
 CONFIG_NET_ETHERNET=y
+CONFIG_8139TOO=y
 CONFIG_NET_VENDOR_INTEL=y
 CONFIG_E1000=y
 CONFIG_NET_VENDOR_BROADCOM=y

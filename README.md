@@ -1,9 +1,11 @@
 # ATV1 — Buildroot Kodi appliance for the Apple TV 1st gen (A1218)
 
-Pentium M "Crofton" 1 GHz · **Intel GMA950** (i945GMS — the only GPU
-Mac1,1 has) · 256 MB RAM · 10/100 Ethernet · 2× USB 2.0 · 2.5" SATA ·
-32-bit EFI · dead-silent. No CrystalHD card in this box (it was always
-a mini-PCIe add-on, never onboard).
+Pentium M "Crofton" 1 GHz · 256 MB RAM · 10/100 Ethernet · 2× USB 2.0 ·
+2.5" SATA · 32-bit EFI · dead-silent. Two units, one image, proven
+heterogeneous (see §6 Stage-0 findings): **unit A** (stock) carries only
+the Intel GMA950 of the i945GMS chipset; **unit B** (aTVFlash-modded)
+carries a mini-PCIe **GeForce Go 7300** that owns its HDMI. Neither
+unit has a CrystalHD card (that was always a mini-PCIe add-on mod).
 
 The idea: a fully source-built, vendor-lock-in-free Kodi box. With no
 decoder card, H.264 is software work for a 1 GHz Celeron M — the honest
@@ -102,7 +104,7 @@ Everything below was true of Buildroot ≈2017.08 and is false later:
 | Dependency | Why 2017.08-era |
 |---|---|
 | Kodi **17.3** | last release with the CrystalHD accelerator (**removed in 18**) — pays off only if a card is added later |
-| Mesa **gallium swrast** | GMA950 has no buildable hardware GL in this combo: Mesa 17.1 deleted the classic i915 driver (buildroot's `_DRI_DRIVER_I915` option is stale — picking it breaks configure), and neither i915g nor llvm/llvmpipe exist in this buildroot. swrast = GL 2.1 software, exactly Kodi 17's floor |
+| Mesa **17.1.x** | unit B's nv40 (Go 7300) needs Mesa's NOUVEAU classic DRI — nv40 support is gone from Mesa ≥ 17.3. Unit A's GMA950 has no buildable hardware GL in this combo at all (classic i915 deleted in 17.1; no i915g/llvmpipe options here) → gallium swrast = GL 2.1 software, exactly Kodi 17's floor |
 | kernel **4.9.x LTS** | Buildroot 2017.08's own LTS. NOT pinned by CrystalHD anymore — no card is installed, and the in-tree staging driver is verified absent from 4.9.337 and every later era kernel (an earlier note here claimed the kernel was chosen for crystalhd; the hardware inventory proved that moot) |
 | grub2 **i386-efi** target | ATV1 firmware is 32-bit EFI (like MacBook2,1) |
 | python2 add-ons | this era's add-on ecosystem |
@@ -211,6 +213,26 @@ For path 1: the A1218's firmware verifies its own EFI binaries until you unlock 
 Iterate: edit tree → re-copy into container → `make O=/root/out all`
 → re-dd stick. Overlay/post-build changes rebuild in seconds.
 
+### Stage-0 findings (recorded from hardware, 2026-10-27)
+
+- **CPU (both units, CPUID via unit B's OS X):** `SSE SSE2` present —
+  the defconfig's "no SSE2 until CPUID proves it" gate is satisfied;
+  pentium4 toolchain promotion is unlocked (roadmap; needs a full
+  rebuild, deliberately not folded into the baseline).
+- **Unit B NIC (ioreg):** Realtek **RTL8139** (`10ec:8139`) → kernel
+  `8139too`. None of the original five candidates matched it; they
+  stay as insurance until unit A's NIC is seen.
+- **Unit B GPU (ioreg display@0):** NVIDIA **Go 7300**, `10de:01d7`,
+  Apple subsystem, behind a PCIe bridge, Apple's NVDA driver active —
+  it owns this unit's HDMI. The original README "7300" spec was true
+  of this unit all along.
+- **Unit A GPU:** not yet read directly (stock firmware, no SSH); the
+  i915/GMA950 expectation comes from Apple's Mac1,1 spec and the 945
+  chipset family. First boot of our image is its confirmation.
+- **Identities:** unit A = stock ATV OS, MAC `00:23:32:33:FC:21`, no
+  SSH. Unit B = aTVFlash/NitoTV, ATV OS 10.4.7 (8N6014), MAC
+  `00:17:F2:F7:98:9D`, `frontrow` SSH needs legacy kex/CBC options.
+
 ## 7. Permanent install
 
 Boot the stick, then `dd` the image to the internal bay — the A1218 takes
@@ -224,6 +246,13 @@ From macOS, after a clean unmount: `sudo dd if=atv1-disk.img of=/dev/rdiskN bs=4
 
 ## 8. Roadmap (deliberately not in v1)
 
+- **pentium4 toolchain promotion** — SSE2 proven by CPUID (§6
+  findings); every package rebuilds, so it rides the next full build.
+- **xstartup GPU-select for unit B** — X probes the iGPU first there;
+  when `10de` is present, force the nouveau screen (xorg.conf.d
+  snippet or BusID), else unit B paints on the GMA950's dead output.
+- **NIC candidate prune-down** — after unit A's NIC is observed, drop
+  the unused e1000/tg3/bnx2/sky2/r8169 insurance from the fragment.
 - **IR remote**: lirc `macmini` era driver + eventlircd → Apple Remote.
   Until then: Kodi's :8080 JSON-RPC + any phone remote app (enabled in
   advancedsettings.xml).

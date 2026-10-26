@@ -51,11 +51,14 @@ BR2_LINUX_KERNEL_USE_DEFCONFIG=y
 BR2_LINUX_KERNEL_DEFCONFIG="i386"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/linux.fragment"
 
-# ---- Graphics: Intel GMA950 (i945GMS) — the A1218's ONLY GPU ----
-# The old "GeForce Go 7300 owns HDMI, never enable i915" story was
-# wrong for this machine — Mac1,1 carries no NVIDIA silicon — and it
-# would have disabled i915 on the only GPU it has: black screen.
-# Purged 2026-10-27; `lspci` on the hardware confirms at Stage-0.
+# ---- Graphics: a heterogeneous fleet, proven by ioreg on the units ----
+# Unit A (stock, .46): Intel GMA950 (i945GMS) only -> i915 + swrast GL.
+# Unit B (aTVFlash/NitoTV mod, .8): mini-PCIe GeForce Go 7300 (PCI
+# 10de:01d7, Apple subsystem) behind a PCIe bridge — it owns that box's
+# HDMI. nv40 gets real hardware GL via Mesa 17.1's NOUVEAU classic DRI
+# — a reason the Mesa era pin matters. X's default probe prefers the
+# iGPU on unit B, so its xstartup must force the nouveau screen (TODO
+# GPU-select logic before unit B runs this image).
 # 2017.08-era X11 umbrella symbol (BR2_PACKAGE_XORG_SERVER is a later
 # naming; kconfig silently drops assignments to unknown symbols).
 BR2_PACKAGE_XORG7=y
@@ -64,7 +67,9 @@ BR2_PACKAGE_XSERVER_XORG_SERVER=y
 # Intel DDX: the era-correct X driver for GMA950 on KMS (this era has
 # no modesetting driver package).
 BR2_PACKAGE_XDRIVER_XF86_VIDEO_INTEL=y
-# fbdev stays as the Stage-0 fallback if the SDVO->HDMI path misbehaves.
+# Nouveau DDX: unit B's Go 7300 (and its HDMI).
+BR2_PACKAGE_XDRIVER_XF86_VIDEO_NOUVEAU=y
+# fbdev stays as the Stage-0 fallback (SDVO quirks on A, safety net on B).
 BR2_PACKAGE_XDRIVER_XF86_VIDEO_FBDEV=y
 BR2_PACKAGE_XAPP_XINIT=y
 BR2_PACKAGE_MESA3D=y
@@ -73,12 +78,14 @@ BR2_PACKAGE_MESA3D=y
 # EGL is a Stage-1 observation, but the build gate needs these flags.
 BR2_PACKAGE_MESA3D_OPENGL_EGL=y
 BR2_PACKAGE_MESA3D_OPENGL_ES=y
-# Software GL — named, not smuggled. Mesa 17.1 DELETED the classic
-# i915 driver, so this era's _DRI_DRIVER_I915 option is stale (picking
-# it would break Mesa's configure); i915g gallium and llvm/llvmpipe
-# are not exposed by this buildroot at all. Gallium swrast = GL 2.1 in
-# software, exactly Kodi 17's floor. Whether 1 GHz + 256 MB drives it
-# acceptably is a Stage-0 observation, not a claim.
+# Unit B's nv40 via Mesa 17.1's NOUVEAU classic DRI (there is no _NV40
+# symbol; nv40 support is gone from Mesa >= 17.3 — the era pin again).
+BR2_PACKAGE_MESA3D_DRI_DRIVER_NOUVEAU=y
+# Unit A's GMA950: software GL, named not smuggled. Mesa 17.1 DELETED
+# the classic i915 driver (_DRI_DRIVER_I915 option is stale); i915g
+# gallium and llvm/llvmpipe are not exposed by this buildroot. Gallium
+# swrast = GL 2.1 software, exactly Kodi 17's floor. Whether 1 GHz +
+# 256 MB drives it acceptably is a Stage-0 observation, not a claim.
 BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_SWRAST=y
 
 # ---- Media: Kodi 17 (last release with CrystalHD support — see note) ----
@@ -107,6 +114,12 @@ BR2_PACKAGE_HTOP=y
 BR2_PACKAGE_E2FSPROGS=y
 BR2_PACKAGE_GPTFDISK=y
 BR2_PACKAGE_GPTFDISK_SGDISK=y
+
+# ---- Host tools genimage 9 shells out to (learned at 03:00 by absence) ----
+# vfat images: mkdosfs from dosfstools; file injection: mcopy/mmd from mtools.
+# Both are option strings in genimage 9's own source.
+BR2_PACKAGE_HOST_DOSFSTOOLS=y
+BR2_PACKAGE_HOST_MTOOLS=y
 
 # ---- Appliance client (ARCHITECTURE doc): Rust, built out-of-era against
 # the Buildroot SDK — see tools/build-client.sh. Default-off until the

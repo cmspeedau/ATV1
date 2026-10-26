@@ -1,264 +1,146 @@
 # ATV1 Engineering Log
 
-Chronological record of how this tree got the way it is: decisions, evidence,
-failed builds and what each one taught. **README.md is the current truth**;
-this file is the history, so a future reader (or future us) never has to
-re-litigate a settled question from memory. Memory got things wrong twice
-here — every claim below traces to a command and its output, or a source
-read.
+Append-only record of decisions, evidence, and failures. Newest last.
+README.md = how-to; ATV1-SPECS.md = hardware; CONFIG-CHANGES.md = config
+ledger; this file = why the tree looks like this. Discipline: nothing is
+"supported" without a hardware observation; unverified = Unknown.
 
-Rule of the project applied to ourselves: **no silent success** — anything
-unverified says Unknown, including the tree's own hardware claims.
+## 2026-10-25 — bootstrap (`857198d`…)
 
----
+- br2-external against Buildroot 2017.08.x (`a2493ca`). Era pins:
+  Kodi 17.3 (last CrystalHD), Mesa 17.1.x (last nv40 classic DRI),
+  grub2 i386-efi (32-bit EFI firmware), python2 add-ons.
+- Layout per ARCHITECTURE doc: P1 boot.vfat / P2 rootfs / P3 ATV1DATA
+  (LABEL-mounted; survives re-imaging = the recovery model). Rust client
+  cross-built out-of-era (this Buildroot predates in-tree Rust).
+- Tree lives on APFS; AppleDouble junk stripped; exec bits on scripts only.
 
-## 2026-10-25 — Tree bootstrap
+## 2026-10-26 — silent-drop reality of era kconfig (`db0378c`)
 
-- `857198d`: br2-external tree created against **Buildroot 2017.08.x**
-  (`a2493ca`, reports 2017.08.2). Era pins and their evidence live in
-  README §3; the short version: Kodi **17.3-Krypton** (last release with
-  CrystalHD support), Mesa **17.1.5** (nv40 classic DRI is gone in ≥ 17.3),
-  grub2 i386-efi, python2 with `.py` install.
-- `20c62bc`: aligned with the ARCHITECTURE doc — disk layout P1 boot.vfat /
-  P2 rootfs / P3 ATV1DATA (LABEL-mounted, survives re-imaging), dev-vs-product
-  boot paths, prebuilt Rust client hook (this era of Buildroot predates
-  rust-package, so `atv1-client` is cross-built out-of-tree), gptfdisk +
-  e2fsprogs on target for Stage-0 disk surgery.
-- Tree moved to APFS at `~/ATV1`; AppleDouble junk (`._*`) ignored and
-  stripped; file modes normalized (only the scripts and `S20datadirs` +x).
+- Five defconfig settings "looked set" and were dropped: promptless
+  symbol (`BR2_INSTALL_LIBSTDCPP` → set `BR2_TOOLCHAIN_BUILDROOT_CXX`),
+  later-era name (`XORG_SERVER` → `XORG7` + `XSERVER_XORG_SERVER`).
+- Standing rule: audit the generated `.config` after every defconfig run.
+- Config.in help prose must be tab-indented (kconfig parses space-indented
+  prose as commands).
+- Build host containerized: `tools/Dockerfile.build` (debian stretch =
+  era gcc6/py2). Stretch apt moved to archive.debian.org (LTS ended
+  2025-06; stock mirrors dead).
 
-## 2026-10-26 — The era toolchain reality checks
+## 2026-10-27 01:1x — kernel + fragment corrections
 
-- `db0378c`: **era kconfig silently drops unknown or promptless symbols** —
-  `defconfig` lines can vanish with zero warnings. Fix: always audit the
-  generated `.config` after `make defconfig` (a named-symbol audit list is
-  the standing pattern; 23 symbols at the time).
-- `2825a07`: same parser, other direction — kconfig treats space-indented
-  help prose as commands. Config.in help text must be tab-indented.
-- `07ed82e`: era build host containerized — `tools/Dockerfile.build`
-  (Debian stretch) + `tools/container-build.sh` (idempotent; `/work` docker
-  volume makes an interrupted build resume).
-  `9171d42`: stretch mirrors are dead since LTS end (2025-06) — apt sources
-  point at `archive.debian.org`.
-- `efc9df1`: toolchain `kernel-headers` pinned to the era's 4.12, then later
-  raised to match the chosen kernel (see below).
+- `# CONFIG_RETPOLINE=n` in a fragment disables NOTHING. Canonical
+  `# CONFIG_RETPOLINE is not set` works. Verified on generated `.config`.
+- container-build.sh needs `set -euo pipefail`: `make | tee` masked a
+  failure and reported success once.
+- CrystalHD kernel archaeology (from driver source + git history):
+  in-tree through 3.16.x (final 3.16.85), deleted in 3.17. A belief that
+  4.13.16 was the last carrier was wrong and reverted; kernel now
+  4.9.337 + headers 4_9 (era LTS — card-independent, see next entry).
 
-## 2026-10-27 01:1x — Kernel decisions
+## 2026-10-27 01:28 — premise fix #1, then #2
 
-- `cb4773a`: retpoline disabled via fragment. **Lesson: `# CONFIG_X=n` in a
-  kernel fragment disables nothing** — kconfig only honors the canonical
-  `# CONFIG_X is not set` form. Proven on generated `.config`.
-  `container-build.sh` gained `pipefail` the same night: without it a failing
-  `make | tee` looked like success and the script reported "finished" on a
-  broken build (a masked kernel `archprepare` error lied about its own
-  failure).
-- `d420e4a`: kernel pinned 4.13.16 believing it the last release with the
-  in-tree `crystalhd` staging driver. **This was wrong and later corrected**
-  (see crystalhd entry): the last kernel with in-tree crystalhd is the
-  **3.16.x** series (final stable 3.16.85; deleted in 3.17).
-- Final position: **kernel 4.9.337 + `BR2_KERNEL_HEADERS_4_9`** — chosen on
-  era grounds, *not* pinned by crystalhd anymore, because the fleet has no
-  CrystalHD card (user-confirmed; card purchase planned, see below).
+- Unit at hand (stock, .46): no CrystalHD card → card stops being a pin.
+  The same commit purged "7300 owns HDMI / never enable i915" prose as
+  fiction — HALF WRONG: true of the second (modded) unit, see Stage-0.
+- Lesson kept in the open: hardware claims come from instruments, not
+  memory; both GPU paths are in the config now.
 
-## 2026-10-27 01:28 — Premise fix #1 (and why it needed a #2)
+## 2026-10-27 02:0x — CrystalHD package + dead endpoints
 
-- `dbcde31`: unit on the table (stock, 10.0.0.46) has no CrystalHD card and,
-  we believed, no NVIDIA GPU either → tree rewritten to GMA950 + swrast,
-  "GeForce Go 7300 owns the HDMI" prose purged.
-  **Half of this was right, half overcorrected** — see the Stage-0 SSH entry.
-  Kept in the log deliberately: this project's failure mode was spec prose
-  from memory, and this entry is the proof we only trust instruments.
+- `package/crystalhd` repointed: dead LibreELEC fork →
+  crystalhd-arch/libcrystalhd v20131127; sha512 `28009f…` recorded;
+  LGPL-2.1+. Stays dormant: buy ONLY BCM970012 (`14e4:1612` binds;
+  BCM970015/AW-VD920 do not). Enable plan in README §9.
+- Dead `git://` downloads overridden via dl/ cache only (no buildroot
+  edits): intel DDX `b57abe20…` (gitlab.freedesktop.org archive),
+  rtmpdump `fa8646da…` (sources.buildroot.net). Audited: no other
+  selected package uses git://. Commands: README §3.
 
-## 2026-10-27 02:0x–02:1x — CrystalHD card, researched to ground truth
+## 2026-10-27 02:2x — post-build/post-image failure chain
 
-- `870f41e` + `356e93b`:
-  - Driver history verified against v3.16.85 source: in-tree through 3.16.x,
-    **deleted in 3.17**. Enable-when-card-arrives plan (in the fragment and
-    README): kernel flip to 3.16.85 + headers 3.16 + `STAGING`/`CRYSTALHD`
-    + re-enable the dormant package + `KODI_DEPENDENCIES += crystalhd`,
-    verified via configure log.
-  - **Buying constraint: the card must be a BCM970012 (BCM70012 chip, PCI
-    `14e4:1612`) — the ONLY id the in-tree driver binds** (read from the
-    driver's pci id table). BCM970015 / AW-VD920 cards look identical and do
-    NOT work. User is buying accordingly.
-  - Package source repointed from the dead LibreELEC fork to
-    **crystalhd-arch/libcrystalhd v20131127**; sha512 `28009f…` verified
-    against AUR and recorded in `crystalhd.hash`; license LGPL-2.1+.
-    Package stays dormant until the card arrives.
+Each failure → root cause → fix (all committed):
+1. Unselected `BR2_PACKAGE_ATV1_CLIENT` is UNSET: guard `${VAR:-}` (set -u).
+2. grub2 i386-efi output path is `images/efi-part/EFI/BOOT/bootia32.efi`.
+3. genimage.cfg must use genimage 9's option surface (vfat has no
+   `label` → `extraargs = "-n ATV1BOOT"`; ext4 knows only `label`).
+4. Era default grub.cfg hardcoded `root=/dev/sda1`; ours: sda2/sdb2/sdc2,
+   `console=tty1 console=ttyS0,57600`.
 
-## 2026-10-27 02:17 — Dead era endpoints (`dl/` overrides)
+## 2026-10-27 02:3x — genimage 9 host-tool whack-a-mole → phantom lesson
 
-- `289837b`: two selected packages had dead `git://` upstreams; working
-  archives staged in `dl/` and documented in README §2a:
-  intel DDX `b57abe20` (gitlab.freedesktop.org archive), rtmpdump
-  `fa8646da` (sources.buildroom.net — *buildroot.net*). Audited: no other
-  selected package uses `git://`.
+- `mkdosfs: not found`, then `genext2fs: not found` ×2. genimage 9's
+  execl'd binaries enumerated from its source: `mkdosfs mcopy mmd
+  genext2fs tune2fs dd` (jffs2/ubifs unused).
+- `HOST_GENIMAGE_DEPENDENCIES +=` alone did nothing: this era only
+  INSTANTIATES package rules when the package's Kconfig symbol is
+  enabled → enable `BR2_PACKAGE_GENEXT2FS` (+ belt: container-build.sh
+  prebuilds `host-genext2fs host-e2fsprogs host-dosfstools host-mtools`).
+- `BR2_PACKAGE_GENEXT2FS` is the only era symbol (no HOST_-only form);
+  the 40 KB target binary is acceptable disk-surgery kit.
 
-## 2026-10-27 02:2x — Image-assembly failure chain
+## 2026-10-27 morning — Stage-0 SSH probe of unit B (decisive evidence)
 
-Fixed one honest failure at a time (all in target-post-image / post-build):
+Access (that host only): `ssh -oKexAlgorithms=+diffie-hellman-group1-sha1
+-oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa
+-oCiphers=+aes256-cbc,aes128-cbc,3des-cbc frontrow@10.0.0.8` (user/pass
+frontrow/frontrow; legacy ATV OS X; PATH nearly empty — use
+`/bin:/usr/bin:/sbin:/usr/sbin`; `sort`/`uniq` missing → use `awk`).
 
-1. `489cb7e` post-build crash: an unselected `BR2_PACKAGE_ATV1_CLIENT` is
-   *unset*, not empty — guard with `${BR2_PACKAGE_ATV1_CLIENT:-}`.
-2. `6f8fbc6` post-image assumed the wrong grub output path; the era grub2
-   package actually emits `efi-part/EFI/BOOT/bootia32.efi`. (Era default
-   grub.cfg also wrongly used `root=/dev/sda1`; ours: sda2/sdb2/sdc2,
-   `console=tty1+ttyS0,57600` — README §6.)
-3. `f061f59` genimage.cfg conformed to **genimage 9's real option surface**
-   (era version; options added in later genimages simply fail to parse).
-4. Host tools genimage 9 shells out to but never declares — enumerated from
-   its own source (`execl` strings): `mkdosfs` (`mkdosfs: not found`) and
-   `mcopy`/`mmd` → `BR2_PACKAGE_HOST_DOSFSTOOLS=y`,
-   `BR2_PACKAGE_HOST_MTOOLS=y`.
-5. `genext2fs: not found` — added `HOST_GENIMAGE_DEPENDENCIES +=
-   host-genext2fs host-e2fsprogs` to external.mk (`make --eval` proved the
-   append survives; external.mk is included after package/Makefile.in).
-   `44535e8`.
-6. **Still** `genext2fs: not found`. Root cause (`d221ec0`): *this era only
-   instantiates a package's make rules when its `.config` symbol is enabled*
-   — a dependency on a never-selected package is a **phantom** (the merged
-   variable printed fine; variables are not rules). Fix in layers:
-   `BR2_PACKAGE_GENEXT2FS=y` in defconfig (no HOST-only symbol exists this
-   era; the 40 KB target binary is legitimate disk-surgery kit anyway) AND
-   an explicit idempotent prebuild line in `container-build.sh`
-   (`host-genext2fs host-e2fsprogs host-dosfstools host-mtools` right after
-   defconfig), so post-image never depends on graph-order subtleties and a
-   dead upstream fails at minute one instead of hour one.
+Raw findings (expect scripts kept at
+`/private/var/folders/.../opencode/atv-stage0*.exp`):
+- `sw_vers`: Apple TV OS 10.4.7 build 8N6014 (= firmware 3.0.2, last
+  official) + aTV Flash/NitoTV banner.
+- `machdep.cpu.features`: `FPU VME DE PSE TSC MSR PAE MCE CX8 APIC SEP
+  MTRR PGE MCA CMOV PAT CLFSH DS ACPI MMX FXSR SSE SSE2 SS TM EST TM2`
+  → **SSE2 exists** (pentium4 promotion unlocked; not yet applied).
+- ioreg: `display@0` = `vendor-id <de100000> device-id <d7010000>` →
+  **NVIDIA `10de:01d7` GeForce Go 7300**, Apple subsystem `106b`,
+  behind `IOPCI2PCIBridge` (mini-PCIe slot), Apple NVDA driver active →
+  owns unit B's HDMI. Chipset all `8086:27xx` (945/ICH7).
+- ioreg NIC: `device-id <39810000> vendor-id <ec100000>` → **Realtek
+  `10ec:8139`** — none of the five guessed NIC drivers matched →
+  `CONFIG_8139TOO=y` added (without it: no network on first boot).
+- Identities: unit A stock MAC `00:23:32:33:FC:21` (no SSH; :8080 resets
+  non-Safari; DAAP :3689). Unit B MAC `00:17:F2:F7:98:9D`.
+- Config consequence: one image carries BOTH stacks — kernel
+  i915+nouveau+TTM+8139too; X intel+nouveau+fbdev; Mesa nv40 classic DRI
+  (unit B HW GL) + gallium swrast (unit A). Unit B needs forced nouveau
+  screen in xstartup (roadmap) or X paints on the iGPU.
 
-Ops note, same night: **Docker Desktop can quit silently.** A run sat at
-exit(2) for 8 hours with nobody watching; `docker ps` status is part of any
-"why is it quiet" check. Containers are started `-d` with no restart policy
-— after an engine restart, `docker start atv1-build`.
+## 2026-10-27 — genimage 9 content model (ext ENOSPC)
 
-## 2026-10-27 morning — Stage-0 on unit B (real hardware, via SSH)
+- `genext2fs: couldn't allocate a block` in the 64 MB data image. Cause
+  (from v9 source): ext images' content = `cp -a --rootpath`, and
+  buildroot's genimage.sh sets `--rootpath ${TARGET_DIR}` (whole rootfs).
+  Per-image mountpoints: plumbing only, no config option in v9.
+- Fix: `file` handler embeds pre-built raw files (`copy=false` as-is).
+  post-image.sh formats `atv1-data.ext4` (`mkfs.ext4 -F -q -L ATV1DATA
+  … 65536`); genimage.cfg embeds P2 and P3 via `file` blocks. Empty ext4
+  via an ext4 block is impossible in v9 — don't retry that path.
+- Also noted: genimage 9 does not align partitions (P1 starts at sector 1).
 
-User: "10.0.0.8 running nitotv". Got in as `frontrow`/`frontrow`. That box
-answered questions the docs could not. Modern OpenSSH refuses its 2007-era
-server; working flags (this host ONLY, never elsewhere):
+## 2026-10-27 — FIRST IMAGE: built, exported, verified
 
-```
-ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
-    -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa \
-    -oCiphers=+aes256-cbc,aes128-cbc,3des-cbc frontrow@10.0.0.8
-```
+- `~/ATV1/images/atv1-disk.img`, 608 MiB, sha256
+  `6b0c907d5a2eed9643e1f1455d2a8bbaea68b537f1bd2aba6154089dce79a0a0`.
+- `tools/verify-image.sh` ALL OK from the bytes: MBR 3 partitions, P1
+  FAT (bzImage + EFI/boot/bootia32.efi + grub.cfg) bootable, P2 ext
+  rootfs, P3 ATV1DATA ext4 empty (debugfs root dir 1024 B).
+- The verifier found 4 bugs in itself (sfdisk `type=` vs `Id=`, mdir
+  renders 8.3 names with a space not a dot, tune2fs prints lowercase
+  "volume name", a clean mkfs.ext4 spends ~11% on journal so free-blocks
+  is the wrong emptiness test) and 0 in the image.
+- Docker Desktop note: it quit silently once mid-failure (container sat
+  at exit(2) for 8 h). Check `docker ps` when a run goes quiet.
 
-Its OS X shell has a nearly-empty PATH (use `/bin:/usr/bin:/sbin:/usr/sbin`;
-`sort`/`uniq` are physically missing — use `awk`). Working expect scripts:
-`/private/var/folders/.../opencode/atv-stage0*.exp`.
+## Current state / next
 
-**Findings (raw evidence):**
-
-- Banner: *aTV Flash*; `sw_vers`: Apple TV OS **10.4.7, build 8N6014**
-  (= firmware 3.0.2, the last official); Darwin 8.8.2 i386.
-- **CPUID (`machdep.cpu.features`): includes `SSE SSE2`** — the defconfig's
-  "no SSE2 until CPUID proves it" gate is satisfied. pentium4 toolchain
-  promotion unlocked; deferred to the next full rebuild (roadmap), since it
-  rebuilds every package.
-- **Ethernet = Realtek RTL8139**, PCI `10ec:8139` (ioreg: `device-id
-  <39810000>`, `vendor-id <ec100000>`). NONE of the five "likely 2007"
-  candidates (e1000/tg3/bnx2/sky2/r8169) matched. `CONFIG_8139TOO=y` added
-  to the fragment; candidates stay as insurance until unit A's NIC is seen.
-  Without this finding, first boot = no network on both boxes.
-- **GPU: `display@0` = NVIDIA `10de:01d7` — GeForce Go 7300 (G72M)**,
-  Apple subsystem (`106b`), behind an `IOPCI2PCIBridge` (expansion slot),
-  Apple's NVDA driver loaded, active. It owns this unit's HDMI. The
-  original README "GeForce Go 7300" spec was **true of this unit**; the
-  01:28 purge overcorrected from seeing only the stock box.
-- Chipset corroborates Mac1,1: Intel `8086:27xx` 945 family throughout;
-  WiFi is Apple-branded Broadcom (`14e4`, subsystem `106b`).
-- **Identities:** unit A = stock, MAC `00:23:32:33:FC:21` (.46, no SSH, web
-  on 8080 resets non-Safari, DAAP 3689 open). Unit B = aTVFlash/NitoTV mod,
-  MAC `00:17:F2:F7:98:9D` (.8).
-
-**Config consequences (`2b18c5f`):** the fleet is heterogeneous, so the one
-image carries both stacks — kernel `DRM_I915=y` + `DRM_NOUVEAU=y` (+TTM)
-+`8139too`; X gets intel + nouveau + fbdev DDXs; Mesa gets nv40 classic DRI
-(real hardware GL on unit B — the actual reason the Mesa era pin matters)
-AND gallium swrast (unit A). Per-unit screen choice is an xstartup concern,
-not a kernel one: **TODO — force the nouveau screen on unit B** (X probes
-the iGPU first there and would paint on a dead output). Roadmap also carries
-the pentium4 promotion and the NIC candidate prune-down after unit A is read.
-
-What the findings buy, in one line each: 8139too prevents the worst first
-debug day (no network, no SSH); the 7300 truth turns unit B from software-GL
-crawling into hardware GL and keeps one image booting on both boxes; SSE2
-unlocks a faster codegen pass everywhere; unit B's aTVFlash install doubles
-as a reference OS on identical silicon (and both units' internal Apple OSes
-stay untouched — our image lives on USB/P1-P2, nothing is a one-way door).
-
-## 2026-10-27 — genimage 9's content model (the ENOSPC story)
-
-Next post-image failure after the host tools were fixed: `genext2fs:
-couldn't allocate a block (no free space)` on the 64 MB `ATV1DATA` image.
-Read the v9 source instead of guessing:
-
-- `collect_mountpoints()`: the root mountpoint is **`cp -a --rootpath`**
-  and ext images without a mountpoint use it — i.e. an `ext4` image block
-  in genimage 9 *always* receives a full copy of `--rootpath`.
-- Buildroot's `support/scripts/genimage.sh` passes
-  `--rootpath "${TARGET_DIR}"` — the whole rootfs staging tree. So the
-  empty-data intent was asking genext2fs to pack the entire rootfs into
-  64 MB. Not a size problem; a content-model problem.
-- v9 has per-image mountpoint *plumbing* but no config option for it
-  (dead code in this version).
-
-Fix (era mechanism, verified in `image-file.c` + handler registration):
-the **`file` handler** embeds a pre-built raw file from inputpath
-(`copy = false` embeds it as-is; size = file size). So `post-image.sh`
-now formats the data fs itself (`mkfs.ext4 -F -q -L ATV1DATA
-atv1-data.ext4 65536` = empty ext4, 64 MiB, host e2fsprogs) and
-`genimage.cfg` embeds it via `image rootfs-data.ext4 { file { name =
-"atv1-data.ext4"; copy = false } }`. The rootfs partition reference is
-likewise made an explicit `image rootfs.ext4 { file { copy = false } }`
-(one mechanism, no undeclared-name fallbacks). `S20datadirs` fills the
-partition on first boot.
-
-## 2026-10-27 — FIRST SUCCESSFUL IMAGE: atv1-disk.img
-
-The whole pipeline went green end to end: defconfig → toolchain (era,
-pentium_m baseline) → kernel 4.9.337 (fleet fragment: i915 + nouveau +
-8139too) → X/Mesa/Kodi 17.3 → rootfs → EFI assembly → genimage disk →
-export. Artifact:
-
-- `~/ATV1/images/atv1-disk.img`, 608 MiB, **SHA-256
-  `6b0c907d5a2eed9643e1f1455d2a8bbaea68b537f1bd2aba6154089dce79a0a0`**
-  (pin of the first-good build; every rebuild since regenerates it).
-- Layout on the bytes (verified, not log-trusted): MBR, P1 vfat `ATV1BOOT`
-  (bzImage + `EFI/BOOT/bootia32.efi` + grub.cfg) bootable, P2 ext rootfs
-  (512 MiB), P3 ext4 `ATV1DATA` (64 MiB, root dir 1024 B = empty).
-- Fact noted: **genimage 9 does not align partitions** — P1 starts at
-  sector 1 (era-contiguous layout). Harmless for 512-byte-sector era
-  disks; noted because modern tools may warn.
-- New `tools/verify-image.sh` re-derives all of it from the image with
-  the era's own binaries (sfdisk/mdir/tune2fs/dumpe2fs/debugfs from
-  `host/bin`). It found three bugs in ITS OWN first drafts (sfdisk
-  `type=` vs `Id=`, mdir's 8.3 space-for-dot rendering, tune2fs's
-  lowercase "volume name", free-blocks-vs-journal as an emptiness test)
-  and zero bugs in the image — which is exactly the arrangement you
-  want when the stakes are a physical boot test.
-
-## Current state (at last edit of this file)
-
-- Build: COMPLETE AND VERIFIED — `atv1-disk.img` (608 MiB, sha256
-  `6b0c907d…a0`, see milestone entry above) is staged and byte-checked
-  by `tools/verify-image.sh`. Container `atv1-build` is idle; a rebuild
-  is just `docker rm` + the standard `docker run` line.
-- **Next milestone:** dd to a USB 2.0 stick, boot unit A (stock .46) via the
-  32-bit-EFI bypass loader (ATVBootloader / ATV1sm, README §6), serial
-  console 57600 8N1 if available; then the Stage-0 checklist on OUR image:
-  `lspci -nn`, `ls /dev/fb*`, `dmesg | grep -iE 'i915|drm|sdvo|hdmi'`,
-  `ifconfig -a` (which NIC got a link).
-- Docs: four-file split — README (current truth), LOG.md (this history),
-  `ATV1-SPECS.md` (hardware record, every line provenance-tagged
-  [V]erified/[A]pple-literature/[E]xpected-unobserved),
-  `CONFIG-CHANGES.md` (the build-config ledger: every defconfig/
-  fragment/genimage change old→new with the why, plus the effective
-  snapshot of the first-good image).
-- Still Unknown (first boot answers all of it): unit A's NIC/GPU (inferred
-  same-product, not observed), the 32-bit EFI boot path (the era's biggest
-  unknown), SDVO→HDMI quirks on stock, swrast usability at 1 GHz.
-- Parked: `DESIGN-LANGUAGE.md` (0.4.0-draft, uncommitted, in iCraftMusic);
-  cross-build `atv1-client` via `tools/build-client.sh` (and fix its README's
-  "glibc 2.24" claim — the era toolchain ships what it ships); trash the
-  `ATV1.stale-copy-do-not-use` folder; pentium4 + xstartup GPU-select per
-  roadmap; CrystalHD enablement when the BCM970012 card arrives.
+- Image above ready to burn. Next milestone: USB boot of unit A
+  (README §5): answers the 32-bit EFI path, unit A NIC/GPU, SDVO
+  behavior. Then unit B run with the xstartup GPU-select (roadmap).
+- Parked: pentium4 rebuild; DESIGN-LANGUAGE.md (iCraftMusic, uncommitted);
+  build-client.sh glibc-claim fix; stale-copy deletion.
+- Docs are four files: README (how-to), ATV1-SPECS (hardware+provenance),
+  CONFIG-CHANGES (config ledger), LOG (this). Keep them current with
+  every relevant commit; keep them command-grade.

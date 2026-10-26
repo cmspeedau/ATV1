@@ -1,91 +1,81 @@
-# ATV1 (Apple TV 1st gen, A1218 / Mac1,1) — Hardware Specifications
+# ATV1 (A1218 / Mac1,1) — Hardware Facts
 
-The fleet's hardware record. Companion to `README.md` (current truth) and
-`LOG.md` (engineering history); this file answers "what is the silicon"
-and — the part that matters here — **how do we know each line**.
+Fleet hardware record. Every line tagged by how it is known:
+- **[V]** verified on our units via SSH (`ioreg`/`CPUID`/`sw_vers`), 2026-10-27
+- **[A]** Apple's published literature, not re-measured
+- **[E]** expected, NOT yet observed — first boot of our image confirms or corrects
 
-Provenance tags:
-- **[V]** — verified first-hand on our own units (ioreg / CPUID / `sw_vers`
-  over SSH), 2026-10-27. Raw outputs live in `LOG.md`; expect scripts at
-  `/private/var/folders/.../opencode/atv-stage0*.exp`.
-- **[A]** — Apple's published spec literature (archived), not re-measured.
-- **[E]** — expected/assumed, NOT yet observed on the unit in question;
-  first boot of our image confirms or corrects.
+Probe access to unit B (reference unit; these flags for THAT host only):
 
-## Platform (shared by both units)
+```sh
+ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
+    -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa \
+    -oCiphers=+aes256-cbc,aes128-cbc,3des-cbc frontrow@10.0.0.8
+# user/pass: frontrow/frontrow. PATH is nearly empty: export
+# PATH=/bin:/usr/bin:/sbin:/usr/sbin first; sort/uniq absent, use awk.
+```
 
-| Item | Spec | Provenance |
+## Shared platform
+
+| Item | Spec | Tag |
 |---|---|---|
-| CPU | Intel Pentium M "Crofton" @ 1.00 GHz, 32-bit (i386), SSE2-capable | [V] CPUID via unit B |
-| CPU brand string | reports `Genuine Intel(R) processor` — Apple masked it | [V] |
-| CPUID features | `FPU VME DE PSE TSC MSR PAE MCE CX8 APIC SEP MTRR PGE MCA CMOV PAT CLFSH DS ACPI MMX FXSR SSE SSE2 SS TM EST TM2` | [V] verbatim |
-| SSE2 | **present** — toolchain may use pentium4 codegen | [V] |
-| Memory | 256 MB RAM, soldered | [A]; usable size [E] |
-| Chipset | Intel 945 family + ICH7: PCI `8086:27xx` devices throughout the tree | [V] ids observed |
-| iGPU | Intel GMA 950 (integrated in the 945 northbridge) | [A] + [V] on unit A side via chipset [E] for its display path |
-| Ethernet | **Realtek RTL8139** PCI `10ec:8139` (10/100) | [V] unit B — decisive, none of the five "likely" NIC drivers matched |
-| WiFi | Broadcom, Apple subsystem (`14e4:????`, subsystem `106b`) | [V] vendor; exact SKU not decoded |
-| USB | 2× USB 2.0 | [A]; our first-boot test uses a modest USB 2.0 stick |
-| SATA | one 2.5" SATA port (stock HDD was 40 GB) | [A]; current disk per unit unknown |
-| Firmware | Apple EFI, **32-bit IA32 EFI** → `bootia32.efi`, not bootx64 | [A]/community; [E] — the biggest unknown, confirmed only when our stick boots |
-| Video out | HDMI (via SDVO on the 945); Apple listed up to 1080i — 720p is the honest envelope for this build | [A]; SDVO quirks [E] |
-| Audio out | HDMI audio (AC97/HDA era) + optical/TOSLINK | [A]; not yet exercised |
-| Input | IR receiver (Apple Remote); front LED | [A] |
-| Console | onboard UART header, 57600 8N1 (community-documented mod) | community; [E] |
-| Cooling | passive, fanless — silent by design | [V] by observation; thermals during decode [E] |
+| CPU | Pentium M "Crofton" 1.00 GHz, 32-bit; brand string masked to `Genuine Intel(R) processor` | [V] |
+| CPUID features | `FPU VME DE PSE TSC MSR PAE MCE CX8 APIC SEP MTRR PGE MCA CMOV PAT CLFSH DS ACPI MMX FXSR SSE SSE2 SS TM EST TM2` | [V] |
+| SSE2 | present → pentium4 codegen permitted (promotion still deferred; full rebuild) | [V] |
+| RAM | 256 MB soldered | [A]; usable [E] |
+| Chipset | Intel 945 + ICH7, all PCI ids `8086:27xx` | [V] |
+| iGPU | Intel GMA 950 (northbridge-internal) | [A]; display path live [E] |
+| Ethernet | Realtek RTL8139, PCI `10ec:8139`, 10/100 → driver `8139too` | [V] unit B; [E] unit A |
+| WiFi | Broadcom `14e4`, Apple subsystem `106b`; SKU undecoded; no driver in our image (era b43 needs extracted firmware — use wire) | [V] vendor |
+| USB | 2× USB 2.0 | [A] |
+| SATA | one 2.5" SATA port (stock HDD 40 GB; current disks per unit unknown) | [A]/[E] |
+| Firmware | 32-bit Apple IA32 EFI → `bootia32.efi`; verifies its own EFI binaries until unlocked | [A]; boot [E] |
+| Video out | HDMI via SDVO on the 945 (hotplug quirks [E]) | [A] |
+| Audio out | HDMI + optical | [A]; unexercised |
+| Other | IR receiver (Apple Remote), front LED, fanless/passive | [A]/[V] |
+| Console | UART header, 57600 8N1 | community docs; [E] |
 
 ## Expansion slot (mini-PCIe)
 
-- One user-accessible mini-PCIe slot behind a PCIe bridge
-  (`IOPCI2PCIBridge` in the ioreg tree). [V]
-- **CrystalHD plan:** if a decoder card is added it **must** be a
-  BCM970012 (BCM70012 chip, PCI `14e4:1612`) — the only id the in-tree
-  driver ever bound; BCM970015 / AW-VD920 look identical and do NOT work.
-  In-tree driver existed through kernel 3.16.x, deleted in 3.17. [V]
-  (source archaeology in `LOG.md`)
-- No CrystalHD card is installed in either unit today. [V]
+- One slot behind a PCIe bridge (`IOPCI2PCIBridge` in ioreg tree). [V]
+- CrystalHD: buy ONLY BCM970012 (BCM70012 chip, PCI `14e4:1612` — only id
+  the in-tree driver binds; BCM970015/AW-VD920 identical-looking, never
+  work). Driver in-tree ≤ 3.16.x, deleted 3.17 → kernel flip 3.16.85. [V]
+- No CrystalHD card installed in either unit. [V]
 
-## Fleet inventory
+## Units
 
-### Unit A — stock
-- Firmware: original Apple ATV OS (no softmod), no SSH. [V] (banner-less,
-  port 22 closed)
-- MAC: `00:23:32:33:FC:21` (Apple wired OUI `00:23:32`). [V]
-- Services seen: web config on :8080 (resets clients other than Safari),
-  DAAP :3689. [V]
-- GPU: GMA950 path — **expected** from Apple's Mac1,1 spec + chipset
-  family, not yet read directly. [E]
-- NIC: assumed RTL8139 like unit B (same product line). [E]
+### Unit A — stock (10.0.0.46 when up)
+- Original Apple ATV OS; SSH closed; :8080 web resets non-Safari; DAAP :3689. [V]
+- MAC `00:23:32:33:FC:21`. [V]
+- GPU (GMA950) and NIC (RTL8139): expected from unit B + Apple spec. [E]
 
-### Unit B — aTVFlash / NitoTV mod
-- Firmware base: Apple TV OS 10.4.7, build **8N6014** (= official
-  firmware 3.0.2, the last one) + aTV Flash softmod. [V]
-- MAC: `00:17:F2:F7:98:9D` (Apple wired OUI `00:17:f2`). [V]
-- SSH: `frontrow`/`frontrow`; needs legacy OpenSSH flags
-  (diffie-hellman-group1-sha1 / ssh-rsa / CBC ciphers — unit B only,
-  never elsewhere). Its OS X has a near-empty PATH and no `sort`/`uniq`. [V]
-- **GPU: NVIDIA GeForce Go 7300 (G72M), PCI `10de:01d7`**, Apple
-  subsystem (`106b`), 64-bit GART, behind the PCIe bridge — a mini-PCIe
-  graphics-upgrade card, and it **owns this unit's HDMI** (Apple's NVDA
-  driver loaded on it, display@0 active). [V]
-- GMA950 also present as secondary device. [V]
+### Unit B — aTVFlash/NitoTV mod (10.0.0.8)
+- Base OS: Apple TV OS 10.4.7, build 8N6014 = firmware 3.0.2 (last
+  official), plus aTV Flash softmod; SSH as frontrow (flags above). [V]
+- MAC `00:17:F2:F7:98:9D`. [V]
+- GPU: NVIDIA GeForce Go 7300 (G72M), PCI `10de:01d7`, Apple subsystem
+  `106b`, 64-bit GART, behind the PCIe bridge (mini-PCIe upgrade card);
+  Apple NVDA driver bound; **owns this unit's HDMI**; GMA950 also present
+  as secondary. [V]
 
-## Implications for our image (one image, both units)
+## Per-unit stack in our image (one image, both units)
 
 | Concern | Unit A | Unit B |
 |---|---|---|
-| Kernel DRM | `i915` | `nouveau` (+i915 built too; both in one image) |
+| kernel DRM | i915 | nouveau (both built in) |
 | X DDX | xf86-video-intel | xf86-video-nouveau |
-| GL | Mesa gallium **swrast** (GL 2.1 software) | Mesa 17.1 **nv40 classic DRI** (hardware GL) |
-| Screen choice | default probe | [E] X probes the iGPU first — **TODO: xstartup must force the nouveau screen** (roadmap) |
-| NIC | `8139too` [E] | `8139too` [V] |
+| GL | swrast (GL 2.1 software) | nv40 classic DRI (hardware) |
+| screen pick | default probe OK | [E] X probes iGPU first → xstartup must force nouveau (roadmap) |
+| NIC | 8139too [E] | 8139too [V] |
 
-## Still Unknown (each has a planned observation)
+## Open items (observation that closes each)
 
-1. 32-bit EFI boot of our image (biggest risk) — first USB boot, Stage 0.
-2. Unit A NIC + GPU truth — same boot.
-3. SDVO→HDMI hotplug behavior on stock hardware — same boot, `dmesg`.
-4. swrast at 1 GHz / 256 MB — Stage 1 usage observation.
-5. RAM ceiling and disk identity per unit — `free`/`lsblk` at first boot.
-6. Unit B's exact WiFi SKU — `ioreg` decode if it ever matters (no WiFi
-   driver in our image this era; documented non-feature).
+| Unknown | Closed by |
+|---|---|
+| 32-bit EFI boot path (biggest risk) | first USB boot |
+| unit A NIC + GPU | same boot: `lspci -nn`, `ifconfig -a` |
+| SDVO/HDMI behavior | same boot: `dmesg \| grep -iE 'drm\|sdvo\|hdmi'` |
+| swrast speed at 1 GHz | first playback session |
+| RAM ceiling, disk identity per unit | `free`, `lsblk` at first boot |
+| WiFi SKU | ioreg decode if ever needed (not needed: wired design) |

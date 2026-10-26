@@ -16,6 +16,11 @@ mod), 18-and-later can't use it at all. Buildroot keeps the whole
 userspace inside 256 MB. This is a hand-rolled LibreELEC-7-era image
 you own end to end: kernel defconfig → rootfs → disk image.
 
+**This README is the current truth. [`LOG.md`](LOG.md) is the engineering
+history** — decisions, evidence, every failed build and what it taught,
+including the two hardware premises this project got wrong and how the
+hardware corrected them.
+
 ## 1. Repo layout (this directory = br2-external tree)
 
 ```

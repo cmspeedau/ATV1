@@ -22,6 +22,8 @@ including the two hardware premises this project got wrong and how the
 hardware corrected them. **[`ATV1-SPECS.md`](ATV1-SPECS.md) is the
 hardware record** — fleet inventory with a provenance tag on every line
 (verified / Apple literature / expected-but-unobserved).
+**[`CONFIG-CHANGES.md`](CONFIG-CHANGES.md) is the build-config ledger** —
+every defconfig/fragment/genimage change, old → new, with the why.
 
 ## 1. Repo layout (this directory = br2-external tree)
 

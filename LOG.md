@@ -248,9 +248,12 @@ export. Artifact:
   console 57600 8N1 if available; then the Stage-0 checklist on OUR image:
   `lspci -nn`, `ls /dev/fb*`, `dmesg | grep -iE 'i915|drm|sdvo|hdmi'`,
   `ifconfig -a` (which NIC got a link).
-- Docs: three-file split — README (current truth), LOG.md (this history),
+- Docs: four-file split — README (current truth), LOG.md (this history),
   `ATV1-SPECS.md` (hardware record, every line provenance-tagged
-  [V]erified/[A]pple-literature/[E]xpected-unobserved).
+  [V]erified/[A]pple-literature/[E]xpected-unobserved),
+  `CONFIG-CHANGES.md` (the build-config ledger: every defconfig/
+  fragment/genimage change old→new with the why, plus the effective
+  snapshot of the first-good image).
 - Still Unknown (first boot answers all of it): unit A's NIC/GPU (inferred
   same-product, not observed), the 32-bit EFI boot path (the era's biggest
   unknown), SDVO→HDMI quirks on stock, swrast usability at 1 GHz.

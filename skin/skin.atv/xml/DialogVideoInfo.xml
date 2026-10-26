@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog" id="2003">
+	<defaultcontrol always="true">3</defaultcontrol>
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls>
+		<include>ATV_BG</include>
+		<include>ATV_PosterArt</include>
+		<control type="label">
+			<description>title</description>
+			<posx>420</posx><posy>120</posy><width>740</width><height>60</height>
+			<font>fontBig</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[ListItem.Label]</label>
+		</control>
+		<control type="label">
+			<description>meta</description>
+			<posx>420</posx><posy>180</posy><width>740</width><height>30</height>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[ListItem.Year]$INFO[ListItem.Genre, · ]$INFO[ListItem.Duration, · ]</label>
+		</control>
+		<control type="textbox">
+			<description>plot</description>
+			<posx>420</posx><posy>225</posy><width>740</width><height>260</height>
+			<font>fontMain</font>
+			<textcolor>FFCFCFD6</textcolor>
+			<wrapmultiline>true</wrapmultiline>
+			<label>$INFO[ListItem.Plot]</label>
+		</control>
+		<control type="button" id="3">
+			<description>play</description>
+			<posx>420</posx><posy>520</posy><width>260</width><height>60</height>
+			<font>fontMain</font>
+			<textcolor>FF000000</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<textoffsetx>30</textoffsetx>
+			<label>Play</label>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<onclick>Action(Cancel)</onclick>
+			<onclick>Action(DirectPlay)</onclick>
+		</control>
+		<control type="button" id="4">
+			<description>back</description>
+			<posx>700</posx><posy>520</posy><width>260</width><height>60</height>
+			<font>fontMain</font>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<textoffsetx>30</textoffsetx>
+			<label>Back</label>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<onclick>Action(Cancel)</onclick>
+		</control>
+	</controls>
+</window>

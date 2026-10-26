@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<includes>
+	<import>Includes_Global.xml</import>
+	<import>Includes_Home.xml</import>
+	<import>Includes_Views.xml</import>
+</includes>

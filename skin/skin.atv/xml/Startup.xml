@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<!-- Splash while the library loads. -->
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls>
+		<include>ATV_BG</include>
+		<control type="label">
+			<posx>0</posx><posy>320</posy><width>1280</width><height>80</height>
+			<align>center</align>
+			<font>fontHuge</font>
+			<textcolor>FFE8A00D</textcolor>
+			<label>ATV1</label>
+		</control>
+	</controls>
+</window>

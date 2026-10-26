@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<includes>
+	<!-- The stage: near-black blue gradient, one small texture scaled.
+	     Cheap on 1 GHz swrast on purpose — this is the whole backdrop. -->
+	<include name="ATV_BG">
+		<control type="image">
+			<description>stage</description>
+			<posx>0</posx><posy>0</posy><width>1280</width><height>720</height>
+			<texture>stage.png</texture>
+			<aspectratio>stretch</aspectratio>
+		</control>
+	</include>
+	<include name="ATV_TopBar">
+		<control type="label">
+			<description>wordmark</description>
+			<posx>50</posx><posy>28</posy><width>200</width><height>30</height>
+			<font>fontSmall</font>
+			<textcolor>FF5A5A64</textcolor>
+			<label>ATV1</label>
+		</control>
+		<control type="label">
+			<description>clock</description>
+			<posx>1030</posx><posy>28</posy><width>200</width><height>30</height>
+			<align>right</align>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[System.Time]</label>
+		</control>
+	</include>
+</includes>

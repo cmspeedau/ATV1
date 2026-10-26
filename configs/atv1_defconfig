@@ -97,6 +97,11 @@ BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_SWRAST=y
 BR2_PACKAGE_PYTHON=y
 BR2_PACKAGE_PYTHON_PY_PYC=y
 BR2_PACKAGE_KODI=y
+# skin.atv's typeface (Bitstream Vera license — redistributable, no
+# Apple assets anywhere in the skin). post-build.sh copies
+# DejaVuSans.ttf + DejaVuSans-Bold.ttf from here into the skin's
+# fonts/ dir; the skin's Font.xml references exactly those names.
+BR2_PACKAGE_DEJAVU=y
 # BR2_PACKAGE_CRYSTALHD stays OFF: the box has no BCM70012 card, so
 # software decode is the honest envelope (SD / easy 720p). The package
 # is dormant but alive: mirror repointed to crystalhd-arch (verified

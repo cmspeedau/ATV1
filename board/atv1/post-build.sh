@@ -25,4 +25,30 @@ if [ "${BR2_PACKAGE_ATV1_CLIENT:-}" = "y" ]; then
         fi
 fi
 
+# skin.atv (GPL-2.0-only, original artwork — see skin/skin.atv/README.md):
+# installed into Kodi's user-dir addons; the overlay's
+# userdata/guisettings.xml selects it via lookandfeel.skin. All raster
+# assets are GENERATED at build time by tools/gen_assets.py (stdlib
+# python — container host python is python2, script is 2/3-safe): no
+# binary PNGs in git, no Apple assets, visual identity auditable as
+# source. Fonts come from BR2_PACKAGE_DEJAVU; install path varies by
+# package, so FIND it — never guess (silent-drop lesson).
+if [ -d "${BR2_EXTERNAL_ATV1_PATH:-}/skin/skin.atv" ]; then
+        SKIN="$TARGET_DIR/root/.kodi/addons/skin.atv"
+        rm -rf "$SKIN"
+        mkdir -p "$SKIN/media" "$SKIN/fonts"
+        cp -a "${BR2_EXTERNAL_ATV1_PATH}/skin/skin.atv/." "$SKIN/"
+        python "$SKIN/tools/gen_assets.py"
+        for f in DejaVuSans.ttf DejaVuSans-Bold.ttf; do
+                SRC=$(find "$TARGET_DIR/usr/share/fonts" -name "$f" 2>/dev/null | head -1)
+                if [ -n "$SRC" ]; then
+                        install -m 0644 "$SRC" "$SKIN/fonts/$f"
+                else
+                        echo "post-build: $f not in target — BR2_PACKAGE_DEJAVU missing?" >&2
+                        exit 1
+                fi
+        done
+        echo "post-build: installed skin.atv -> $SKIN (assets generated, fonts copied)"
+fi
+
 exit 0

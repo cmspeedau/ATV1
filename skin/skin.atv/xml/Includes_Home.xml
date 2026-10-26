@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<includes>
+	<!-- Front Row shelf: one horizontal row, gold focus bar (drawn by
+	     focus.png), nothing else. The menu is deliberately short: this
+	     box is driven by the coordinator; the shelf is for watching. -->
+	<include name="ATV_Shelf">
+		<control type="list" id="9000">
+			<description>main shelf</description>
+			<posx>190</posx><posy>270</posy><width>900</width><height>200</height>
+			<orientation>horizontal</orientation>
+			<onleft>9000</onleft>
+			<onright>9000</onright>
+			<itemlayout width="225" height="200">
+				<control type="label">
+					<posx>0</posx><posy>70</posy><width>225</width><height>50</height>
+					<align>center</align>
+					<font>fontBig</font>
+					<textcolor>FF8A8A92</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</itemlayout>
+			<focusedlayout width="225" height="200">
+				<control type="image">
+					<posx>8</posx><posy>60</posy><width>209</width><height>70</height>
+					<texture>focus.png</texture>
+					<aspectratio>stretch</aspectratio>
+				</control>
+				<control type="label">
+					<posx>0</posx><posy>70</posy><width>225</width><height>50</height>
+					<align>center</align>
+					<font>fontBig</font>
+					<textcolor>FFFFFFFF</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</focusedlayout>
+			<content>
+				<item id="1">
+					<label>Movies</label>
+					<onclick>ActivateWindow(Videos,videodb://movies/titles/,return)</onclick>
+				</item>
+				<item id="2">
+					<label>TV Shows</label>
+					<onclick>ActivateWindow(Videos,videodb://tvshows/titles/,return)</onclick>
+				</item>
+				<item id="3">
+					<label>Music</label>
+					<onclick>ActivateWindow(Music,artists,return)</onclick>
+				</item>
+				<item id="4">
+					<label>Power</label>
+					<onclick>ActivateWindow(ShutdownMenu)</onclick>
+				</item>
+			</content>
+		</control>
+	</include>
+</includes>

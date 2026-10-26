@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kodi renders ALL video library windows (movies 50, seasons 2,
+     episodes 51, tvshows 500, ...) through this one classic file name;
+     content adapts via ListItem. -->
+<window>
+	<defaultcontrol always="true">50</defaultcontrol>
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls>
+		<include>ATV_BG</include>
+		<include>ATV_TopBar</include>
+		<include>ATV_VideoList</include>
+	</controls>
+</window>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="skin.atv" version="0.1.0" name="ATV1" provider-name="atv1-project">
+	<requires>
+		<import addon="xbmc.gui" version="5.12.0"/>
+	</requires>
+	<extension point="xbmc.gui.skin" debugging="false">
+		<res width="1280" height="720" aspect="16:9" default="true" folder="xml" />
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary lang="en">Apple-TV-inspired interface for the ATV1 appliance</summary>
+		<description lang="en">Original, lightweight Kodi 17 skin in the spirit of the 2007 Apple TV: black gradient stage, white type, warm-gold focus. No Apple assets of any kind. Built for this appliance's reality - 1 GHz, software GL, kiosk: library browsing, playback, essential dialogs. On-device settings and text entry are deliberately out of scope; the coordinator manages, per ARCHITECTURE.</description>
+		<license>GPL-2.0-only</license>
+		<platform>all</platform>
+	</extension>
+</addon>

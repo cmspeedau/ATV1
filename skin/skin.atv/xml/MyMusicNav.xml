@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- All music library windows (5000..5004) share this classic file. -->
+<window>
+	<defaultcontrol always="true">50</defaultcontrol>
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls>
+		<include>ATV_BG</include>
+		<include>ATV_TopBar</include>
+		<include>ATV_VideoList</include>
+	</controls>
+</window>

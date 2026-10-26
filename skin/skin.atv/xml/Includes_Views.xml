@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<includes>
+	<!-- One honest list view, used by every library window. A 1 GHz CPU
+	     with software GL gets no fanart walls — Front Row itself was
+	     mostly a list. Header shows the current section via
+	     System.CurrentControl. -->
+	<include name="ATV_VideoList">
+		<control type="label">
+			<description>section header</description>
+			<posx>120</posx><posy>70</posy><width>700</width><height>40</height>
+			<font>fontMain</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[System.CurrentControl]</label>
+		</control>
+		<control type="list" id="50">
+			<description>library list</description>
+			<posx>120</posx><posy>130</posy><width>1040</width><height>520</height>
+			<onleft>ActivateWindow(Home)</onleft>
+			<onright>50</onright>
+			<itemlayout height="60" width="1040">
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>700</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFCFCFD6</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+				<control type="label">
+					<posx>740</posx><posy>0</posy><width>300</width><height>60</height>
+					<align>right</align>
+					<font>fontSmall</font>
+					<textcolor>FF787880</textcolor>
+					<label>$INFO[ListItem.Year]$INFO[ListItem.Duration, · ,]</label>
+				</control>
+			</itemlayout>
+			<focusedlayout height="60" width="1040">
+				<control type="image">
+					<posx>0</posx><posy>0</posy><width>1040</width><height>60</height>
+					<texture>focus.png</texture>
+					<aspectratio>stretch</aspectratio>
+				</control>
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>700</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFFFFFFF</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+				<control type="label">
+					<posx>740</posx><posy>0</posy><width>300</width><height>60</height>
+					<align>right</align>
+					<font>fontSmall</font>
+					<textcolor>FF1A1000</textcolor>
+					<label>$INFO[ListItem.Year]$INFO[ListItem.Duration, · ,]</label>
+				</control>
+			</focusedlayout>
+		</control>
+	</include>
+	<!-- poster side for info dialog -->
+	<include name="ATV_PosterArt">
+		<control type="image">
+			<posx>120</posx><posy>120</posy><width>260</width><height>370</height>
+			<texture>poster.png</texture>
+			<aspectratio>stretch</aspectratio>
+		</control>
+		<control type="image">
+			<posx>120</posx><posy>120</posy><width>260</width><height>370</height>
+			<texture>$INFO[ListItem.Art(poster)]</texture>
+			<aspectratio>scale</aspectratio>
+		</control>
+	</include>
+</includes>

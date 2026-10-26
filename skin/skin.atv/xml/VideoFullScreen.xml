@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<!-- The whole point of the box: pure black stage, no chrome. -->
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls/>
+</window>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog" id="110">
+	<!-- ShutdownMenu. Actions are Kodi built-ins (verified against the
+	     bundled Estuary's DialogButtonMenu): Quit() returns to the kiosk
+	     init, which respawns Kodi — the appliance's soft-restart. -->
+	<defaultcontrol always="true">2</defaultcontrol>
+	<backgroundcolor>F0000000</backgroundcolor>
+	<controls>
+		<control type="button" id="2">
+			<posx>540</posx><posy>240</posy><width>200</width><height>60</height>
+			<label>Restart Kodi</label>
+			<font>fontMain</font>
+			<align>center</align>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<onclick>Quit()</onclick>
+		</control>
+		<control type="button" id="3">
+			<posx>540</posx><posy>310</posy><width>200</width><height>60</height>
+			<label>Reboot</label>
+			<font>fontMain</font>
+			<align>center</align>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<onclick>Reset()</onclick>
+		</control>
+		<control type="button" id="4">
+			<posx>540</posx><posy>380</posy><width>200</width><height>60</height>
+			<label>Power off</label>
+			<font>fontMain</font>
+			<align>center</align>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<onclick>Powerdown()</onclick>
+		</control>
+	</controls>
+</window>

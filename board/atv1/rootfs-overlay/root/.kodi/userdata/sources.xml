@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pre-seeded library sources: the appliance's managed roots
+     (/data/media, created by S20datadirs on the ATV1DATA partition).
+     The coordinator puts media here (rsync/SMB push); scanning and
+     management happen coordinator-side. The TV never serves files. -->
+<sources>
+	<videos>
+		<source name="Library">
+			<path>/data/media/library/</path>
+		</source>
+	</videos>
+	<music>
+		<source name="Music">
+			<path>/data/media/music/</path>
+		</source>
+	</music>
+</sources>

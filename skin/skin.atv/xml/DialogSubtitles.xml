@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog">
+	<defaultcontrol always="true">50</defaultcontrol>
+	<backgroundcolor>F0000000</backgroundcolor>
+	<controls>
+		<control type="list" id="550">
+			<description>subtitle selection (core fills)</description>
+			<posx>240</posx><posy>120</posy><width>800</width><height>440</height>
+			<itemlayout height="60" width="800">
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>760</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFCFCFD6</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</itemlayout>
+			<focusedlayout height="60" width="800">
+				<control type="image">
+					<posx>0</posx><posy>0</posy><width>800</width><height>60</height>
+					<texture>focus.png</texture>
+					<aspectratio>stretch</aspectratio>
+				</control>
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>760</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFFFFFFF</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</focusedlayout>
+		</control>
+	</controls>
+</window>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<defaultcontrol always="true">9000</defaultcontrol>
+	<backgroundcolor>FF000000</backgroundcolor>
+	<controls>
+		<include>ATV_BG</include>
+		<include>ATV_TopBar</include>
+		<include>ATV_Shelf</include>
+	</controls>
+</window>

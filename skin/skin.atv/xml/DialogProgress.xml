@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog">
+	<defaultcontrol>99</defaultcontrol>
+	<backgroundcolor>F0000000</backgroundcolor>
+	<controls>
+		<control type="label">
+			<posx>240</posx><posy>240</posy><width>800</width><height>40</height>
+			<align>center</align>
+			<font>fontMain</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[Window(ProgressDialog).Property(line1)]$INFO[Window(ProgressDialog).Property(ProgressLine1)]</label>
+		</control>
+		<control type="progress" id="50">
+			<posx>240</posx><posy>310</posy><width>800</width><height>12</height>
+			<texturebg colordiffuse="33FFFFFF">bar.png</texturebg>
+			<midtexture colordiffuse="FFE8A00D">bar.png</midtexture>
+			<info>Window(ProgressDialog).Property(Percent)</info>
+		</control>
+		<control type="label">
+			<posx>240</posx><posy>340</posy><width>800</width><height>30</height>
+			<align>center</align>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Window(ProgressDialog).Property(line2)]$INFO[Window(ProgressDialog).Property(ProgressLine2)]</label>
+		</control>
+	</controls>
+</window>

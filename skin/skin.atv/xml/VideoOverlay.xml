@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<!-- Info strip shown during playback until it fades (Player.ShowInfo). -->
+	<controls>
+		<control type="label">
+			<posx>80</posx><posy>630</posy><width>900</width><height>40</height>
+			<font>fontMain</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[Player.Title]</label>
+			<visible>Player.ShowInfo + !Window.IsVisible(VideoOSD.xml)</visible>
+			<animation effect="fade" start="0" end="100" time="200">VisibleChange</animation>
+		</control>
+		<control type="label">
+			<posx>980</posx><posy>630</posy><width>220</width><height>40</height>
+			<align>right</align>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Player.Time(hh:mm:ss)] / $INFO[Player.TotalTime(hh:mm:ss)]</label>
+			<visible>Player.ShowInfo + !Window.IsVisible(VideoOSD.xml)</visible>
+		</control>
+	</controls>
+</window>

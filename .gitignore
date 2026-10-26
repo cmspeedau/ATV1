@@ -6,6 +6,11 @@ images/
 linux-backup/
 client/atv1-client*
 
+# skin.atv rasters + fonts are GENERATED at build time (gen_assets.py
+# + post-build DejaVu copy) — no binary assets in git, ever
+skin/skin.atv/media/
+skin/skin.atv/fonts/
+
 # macOS/ExFAT junk — must never enter the tree or a rootfs overlay copy
 ._*
 .AppleDouble

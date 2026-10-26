@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<!-- Music playback overlay: title card over the stage, no visualisation
+	     in v0.1 (software GL budget). -->
+	<controls>
+		<include>ATV_BG</include>
+		<control type="label">
+			<posx>240</posx><posy>300</posy><width>800</width><height>50</height>
+			<align>center</align>
+			<font>fontBig</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[Player.Title]</label>
+		</control>
+		<control type="label">
+			<posx>240</posx><posy>360</posy><width>800</width><height>30</height>
+			<align>center</align>
+			<font>fontMain</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Player.Artist]$INFO[Player.Album, · ]</label>
+		</control>
+		<control type="progress">
+			<posx>240</posx><posy>430</posy><width>800</width><height>8</height>
+			<texturebg colordiffuse="33FFFFFF">bar.png</texturebg>
+			<midtexture colordiffuse="FFE8A00D">bar.png</midtexture>
+			<info>Player.Progress</info>
+		</control>
+	</controls>
+</window>

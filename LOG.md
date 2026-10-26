@@ -150,11 +150,52 @@ Raw findings (expect scripts kept at
   same silent-drop discipline). The pinned first-good sha below is the
   pre-SMB image; record the new one after rebuild + verify.
 
+## 2026-10-27 (evening) — SMB rebuild green; skin.atv v0.1
+
+- SMB rebuild complete: container exit 0; audit green — merged kernel
+  `.config` has `CONFIG_CIFS=y`, buildroot `.config` has
+  `BR2_PACKAGE_CIFS_UTILS=y`, `/work/out/target/sbin/mount.cifs`
+  present (30 KB). New image: 608 MiB, sha256
+  `9a8d159860c2e4b3e3acfe082c07aa12c8c14eb5827b9e8dd795c6f59cbfe79d`
+  — supersedes the pinned first-good `6b0c907d…` (pre-SMB). verify-image
+  rerun on this artifact pending (skin build supersedes it anyway —
+  see next entry's Status).
+- skin.atv v0.1: original Kodi 17 skin, GPL-2.0-only, zero Apple
+  assets — all raster generated at build time by
+  `skin/skin.atv/tools/gen_assets.py` (stdlib python, py2/3-safe),
+  type = DejaVu (Bitstream Vera). Every convention verified against
+  the skins bundled in the built target (`skin.estuary`,
+  `skin.estouchy`), not from memory: classic window file names
+  (`MyVideoNav.xml` covers all video-library windows,
+  `MyMusicNav.xml` the music ones), `xml/` folder via `folder="xml"`,
+  bare texture names resolve from `media/`, fonts defined in
+  `xml/Font.xml` with TTFs in `fonts/`, power actions are
+  `Quit()`/`Reset()`/`Powerdown()`.
+- Skin scope = the kiosk's real surface (home shelf, library lists,
+  video info, player overlay/OSD, confirm/select/progress/subtitle/
+  button-menu dialogs). Deliberately out: settings UI, text entry
+  (no on-screen keyboard), file manager, PVR — the coordinator
+  manages (ARCHITECTURE), ssh exists for the rest.
+- Integration: defconfig + `BR2_PACKAGE_DEJAVU=y` (the package is
+  `dejavu` this era — the later `ttf-dejavu` naming does not exist
+  here; silent-drop trap caught by grepping `package/*/Config.in`);
+  post-build.sh installs the skin to `/root/.kodi/addons/skin.atv/`,
+  runs gen_assets, copies DejaVuSans(+Bold) via `find` (path varies)
+  — hard-fails if either is missing; overlay gains `guisettings.xml`
+  (lookandfeel.skin=skin.atv, screensaver off, mouse off) and
+  `sources.xml` (video→/data/media/library, music→/data/media/music).
+- Status: committed; rebuild pending. After it lands: record new sha,
+  rerun `tools/verify-image.sh`, audit target tree for the skin dir +
+  generated `media/*.png` + `fonts/*.ttf`.
+
 ## Current state / next
 
-- Image above ready to burn. Next milestone: USB boot of unit A
+- Post-SMB image (`9a8d1598…`) ready to burn; skin rebuild will
+  re-pin the sha when it lands. Next milestone: USB boot of unit A
   (README §5): answers the 32-bit EFI path, unit A NIC/GPU, SDVO
-  behavior. Then unit B run with the xstartup GPU-select (roadmap).
+  behavior, and whether skin.atv renders on swrast at 1 GHz
+  (`~/.kodi/temp/kodi.log` for skin errors). Then unit B run with
+  the xstartup GPU-select (roadmap).
 - Parked: pentium4 rebuild; DESIGN-LANGUAGE.md (iCraftMusic, uncommitted);
   build-client.sh glibc-claim fix; stale-copy deletion.
 - Docs are four files: README (how-to), ATV1-SPECS (hardware+provenance),

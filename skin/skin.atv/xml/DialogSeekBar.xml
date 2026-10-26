@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog" id="109">
+	<!-- Shown while holding seek; mirrors the OSD bar. -->
+	<visible>[VideoSeekbar.Visible] + !Window.IsVisible(VideoOSD.xml)</visible>
+	<controls>
+		<control type="progress">
+			<posx>240</posx><posy>650</posy><width>800</width><height>10</height>
+			<texturebg colordiffuse="33FFFFFF">bar.png</texturebg>
+			<midtexture colordiffuse="FFE8A00D">bar.png</midtexture>
+			<info>Player.Progress</info>
+		</control>
+		<control type="label">
+			<posx>240</posx><posy>670</posy><width>800</width><height>30</height>
+			<align>center</align>
+			<font>fontSmall</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[Player.Time(hh:mm:ss)] / $INFO[Player.TotalTime(hh:mm:ss)]</label>
+		</control>
+	</controls>
+</window>

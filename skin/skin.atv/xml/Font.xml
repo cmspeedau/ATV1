@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fonts>
+	<!-- DejaVu (Bitstream Vera license, shipped by BR2_PACKAGE_DEJAVU and
+	     copied into fonts/ by post-build). No AppleGothic, no Helvetica
+	     binaries — the type is original-work redistribution. -->
+	<fontset id="Default">
+		<font>
+			<name>fontTiny</name>
+			<filename>DejaVuSans.ttf</filename>
+			<size>16</size>
+		</font>
+		<font>
+			<name>fontSmall</name>
+			<filename>DejaVuSans.ttf</filename>
+			<size>20</size>
+		</font>
+		<font>
+			<name>fontMain</name>
+			<filename>DejaVuSans.ttf</filename>
+			<size>26</size>
+		</font>
+		<font>
+			<name>fontBig</name>
+			<filename>DejaVuSans-Bold.ttf</filename>
+			<size>34</size>
+		</font>
+		<font>
+			<name>fontHuge</name>
+			<filename>DejaVuSans-Bold.ttf</filename>
+			<size>56</size>
+		</font>
+	</fontset>
+</fonts>

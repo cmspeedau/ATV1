@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One file for confirm/yes-no style dialogs. v0.1 labels are generic
+     OK/Cancel; Action(OK)/Action(Cancel) map correctly onto every
+     dialog flavour's accept/dismiss. Nicer per-type labels are a
+     v0.2 polish item, not a correctness gap. -->
+<window>
+	<defaultcontrol always="true">10</defaultcontrol>
+	<backgroundcolor>F0000000</backgroundcolor>
+	<controls>
+		<control type="label">
+			<posx>240</posx><posy>220</posy><width>800</width><height>120</height>
+			<align>center</align>
+			<wrapmultiline>true</wrapmultiline>
+			<font>fontMain</font>
+			<textcolor>FFFFFFFF</textcolor>
+			<label>$INFO[Window.Property(message)]$INFO[Control.GetLabel(2)]</label>
+		</control>
+		<control type="label" id="2">
+			<description>core writes the message here; keep invisible-label</description>
+			<posx>0</posx><posy>0</posy><width>1</width><height>1</height>
+			<visible>false</visible>
+			<label/>
+		</control>
+		<control type="button" id="10">
+			<posx>440</posx><posy>430</posy><width>180</width><height>60</height>
+			<font>fontMain</font>
+			<align>center</align>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<label>OK</label>
+			<onclick>Action(OK)</onclick>
+		</control>
+		<control type="button" id="11">
+			<posx>660</posx><posy>430</posy><width>180</width><height>60</height>
+			<font>fontMain</font>
+			<align>center</align>
+			<textcolor>FFCFCFD6</textcolor>
+			<focusedcolor>FFFFFFFF</focusedcolor>
+			<texturefocus>focus.png</texturefocus>
+			<texturenofocus>noop</texturenofocus>
+			<label>Cancel</label>
+			<onclick>Action(Cancel)</onclick>
+		</control>
+	</controls>
+</window>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog">
+	<defaultcontrol always="true">50</defaultcontrol>
+	<backgroundcolor>F0000000</backgroundcolor>
+	<controls>
+		<control type="label">
+			<posx>240</posx><posy>90</posy><width>800</width><height>40</height>
+			<align>center</align>
+			<font>fontMain</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Container(50).FolderName,,]</label>
+		</control>
+		<control type="list" id="50">
+			<description>selection list (core fills it)</description>
+			<posx>240</posx><posy>150</posy><width>800</width><height>440</height>
+			<itemlayout height="60" width="800">
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>760</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFCFCFD6</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</itemlayout>
+			<focusedlayout height="60" width="800">
+				<control type="image">
+					<posx>0</posx><posy>0</posy><width>800</width><height>60</height>
+					<texture>focus.png</texture>
+					<aspectratio>stretch</aspectratio>
+				</control>
+				<control type="label">
+					<posx>20</posx><posy>0</posy><width>760</width><height>60</height>
+					<font>fontMain</font>
+					<textcolor>FFFFFFFF</textcolor>
+					<label>ListItem.Label</label>
+				</control>
+			</focusedlayout>
+		</control>
+	</controls>
+</window>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window type="dialog">
+	<defaultcontrol always="true">2</defaultcontrol>
+	<controls>
+		<control type="image">
+			<description>dark scrim so OSD stays readable</description>
+			<posx>0</posx><posy>560</posy><width>1280</width><height>160</height>
+			<texture>bar.png</texture>
+			<colordiffuse>CC000000</colordiffuse>
+			<aspectratio>stretch</aspectratio>
+		</control>
+		<control type="progress">
+			<description>playback position</description>
+			<posx>0</posx><posy>560</posy><width>1280</width><height>10</height>
+			<texturebg colordiffuse="33FFFFFF">bar.png</texturebg>
+			<midtexture colordiffuse="FFE8A00D">bar.png</midtexture>
+			<info>Player.Progress</info>
+		</control>
+		<control type="label">
+			<posx>80</posx><posy>580</posy><width>300</width><height>30</height>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Player.Time(hh:mm:ss)]</label>
+		</control>
+		<control type="label">
+			<posx>900</posx><posy>580</posy><width>300</width><height>30</height>
+			<align>right</align>
+			<font>fontSmall</font>
+			<textcolor>FFB0B0B8</textcolor>
+			<label>$INFO[Player.TotalTime(hh:mm:ss)]</label>
+		</control>
+		<control type="grouplist" id="100">
+			<posx>80</posx><posy>615</posy><width>1120</width><height>90</height>
+			<orientation>horizontal</orientation>
+			<itemgap>30</itemgap>
+			<control type="button" id="2">
+				<width>200</width><height>60</height>
+				<label>Play/Pause</label>
+				<font>fontSmall</font>
+				<align>center</align>
+				<textcolor>FFCFCFD6</textcolor>
+				<focusedcolor>FFFFFFFF</focusedcolor>
+				<texturefocus>focus.png</texturefocus>
+				<texturenofocus>noop</texturenofocus>
+				<onclick>Action(Pause)</onclick>
+			</control>
+			<control type="button" id="3">
+				<width>200</width><height>60</height>
+				<label>-30s</label>
+				<font>fontSmall</font>
+				<align>center</align>
+				<textcolor>FFCFCFD6</textcolor>
+				<focusedcolor>FFFFFFFF</focusedcolor>
+				<texturefocus>focus.png</texturefocus>
+				<texturenofocus>noop</texturenofocus>
+				<onclick>Action(StepBackward)</onclick>
+			</control>
+			<control type="button" id="4">
+				<width>200</width><height>60</height>
+				<label>+30s</label>
+				<font>fontSmall</font>
+				<align>center</align>
+				<textcolor>FFCFCFD6</textcolor>
+				<focusedcolor>FFFFFFFF</focusedcolor>
+				<texturefocus>focus.png</texturefocus>
+				<texturenofocus>noop</texturenofocus>
+				<onclick>Action(StepForward)</onclick>
+			</control>
+			<control type="button" id="5">
+				<width>200</width><height>60</height>
+				<label>Info</label>
+				<font>fontSmall</font>
+				<align>center</align>
+				<textcolor>FFCFCFD6</textcolor>
+				<focusedcolor>FFFFFFFF</focusedcolor>
+				<texturefocus>focus.png</texturefocus>
+				<texturenofocus>noop</texturenofocus>
+				<onclick>Action(Info)</onclick>
+			</control>
+			<control type="button" id="6">
+				<width>200</width><height>60</height>
+				<label>Stop</label>
+				<font>fontSmall</font>
+				<align>center</align>
+				<textcolor>FFCFCFD6</textcolor>
+				<focusedcolor>FFFFFFFF</focusedcolor>
+				<texturefocus>focus.png</texturefocus>
+				<texturenofocus>noop</texturenofocus>
+				<onclick>Stop</onclick>
+			</control>
+		</control>
+	</controls>
+</window>

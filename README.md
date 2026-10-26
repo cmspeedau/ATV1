@@ -21,10 +21,12 @@ board/grub-bios.cfg                       legacy-BIOS fallback menu
 board/atv1/
   linux.fragment                          kernel symbols; merged on every defconfig run
   genimage.cfg                            disk layout (file-handler partitions, see §7)
-  post-build.sh                           exec bits; optional Rust client install
+  post-build.sh                           exec bits; Rust client install; skin.atv install + asset gen
   post-image.sh                           EFI assembly; mkfs data fs; runs genimage
   rootfs-overlay/                         inittab, fstab (LABEL mounts), S20datadirs,
-                                          startkodi.sh, advancedsettings.xml, asound example
+                                          startkodi.sh, kodi userdata (advancedsettings,
+                                          guisettings=skin, sources), asound example
+skin/skin.atv/                            original Kodi 17 skin, GPL-2.0 (§6b); no binaries in git
 package/crystalhd/                        dormant until a card arrives (§9)
 package/atv1-client/                      config hook for a prebuilt Rust binary
 tools/Dockerfile.build                    era build host (debian stretch: gcc6, py2)
@@ -157,6 +159,31 @@ tool. Persistent variant: the commented fstab line in `/etc/fstab`
 (uncomment, adjust server/share; `_netdev` keeps boot sane when the
 server is down). If `mount -t cifs` fails with "bad protocol": macOS
 can be told to speak 2.1 — use `vers=2.1`.
+
+## 6b. Skin: skin.atv
+
+The on-screen look is `skin/skin.atv` — original work, GPL-2.0-only
+(Kodi's own license family; ships in the image cleanly), **no Apple
+assets of any kind**: every raster comes from
+`skin/skin.atv/tools/gen_assets.py` at build time, type is DejaVu
+(Bitstream Vera license, `BR2_PACKAGE_DEJAVU`). Design language and
+v0.1 scope: `skin/skin.atv/README.md`.
+
+Mechanics:
+
+- `post-build.sh` copies the skin to `/root/.kodi/addons/skin.atv/`,
+  runs `gen_assets.py` (container's host python), copies the two DejaVu
+  TTFs into the skin's `fonts/`. Missing fonts or failed asset gen fail
+  the build — no silent skinless boot.
+- Default skin + pre-seeded library sources: `userdata/guisettings.xml`
+  and `userdata/sources.xml` in the rootfs-overlay (sources =
+  `/data/media/library`, `/data/media/music` — the S20datadirs roots).
+- No PNGs/TTFs in git; `media/` is generated — don't commit it.
+- Kiosk surface on purpose: home shelf, library lists, info dialog,
+  player/OSD, essential dialogs. Absent by design: settings UI, any
+  text entry, file manager, PVR. Config happens via ssh/coordinator.
+- First boot: if Kodi comes up in Estuary instead, the skin was skipped
+  — read `~/.kodi/temp/kodi.log` (XML errors land there, not on screen).
 
 ## 7. Era is load-bearing — do not bump Buildroot
 

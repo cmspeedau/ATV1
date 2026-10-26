@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- First-boot defaults (Kodi 17 settings v2 format; partial sections
+     merge fine — Kodi fills the rest). The appliance policy in one
+     line: our skin, no screensaver, no exit confirmation. Deep
+     settings live on the coordinator (ARCHITECTURE); this file is not
+     a config system. -->
+<settings version="2">
+	<section id="lookandfeel">
+		<setting id="lookandfeel.skin">skin.atv</setting>
+	</section>
+	<section id="screensaver">
+		<setting id="screensaver.mode"></setting>
+		<setting id="screensaver.standalonescreensaver"></setting>
+	</section>
+	<section id="powermenu">
+		<setting id="powermenu.power.hddswitch">false</setting>
+	</section>
+	<section id="input">
+		<setting id="input.enablemouse">false</setting>
+	</section>
+</settings>

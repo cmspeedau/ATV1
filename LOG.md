@@ -398,3 +398,16 @@ Raw findings (expect scripts kept at
   stick + read-back verify one-liner, door #2 internal); §6 SATA→PATA
   corrected there too. One-liner caveat: backup GPT at image tail may
   make macOS/Linux offer repair — refuse; primary GPT is authoritative.
+- BURN FORENSICS 2 (owner session): first two read-backs hashed
+  e3b0c442… (the EMPTY-STRING sha) — dd never opened a device
+  (`if=` empty / stderr suppressed by MY one-liner; `dd: no value
+  specified for if` was the tell). Lesson pinned: forensic reads must
+  NEVER carry 2>/dev/null and must show "N+0 records out".
+- BURN PROVEN WITHOUT SUDO: diskutil shows disk2 = our GPT exactly —
+  s1 Apple_Recovery(=5265636F GUID mapped) 64Mi @ offset 1048576,
+  s2 512Mi, s3 64Mi, plus my builder's partition-UUID fingerprint
+  00000001-0000-5641-… → the stick IS atv1-recv-disk.img. Finder/
+  Disk Utility "not an image" complaint = UDIF-only format gate,
+  raw dumps (any dd image) never open there; Disk Utility Restore
+  would also rebuild the map and erase the atvrecv GUID — raw
+  writers (dd/Etcher) are the only correct burn tools for this disk.

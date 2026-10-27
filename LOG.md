@@ -596,3 +596,33 @@ Raw findings (expect scripts kept at
   the naive guess would have been a silent no-op).
   If base system lives: ssh in, dmesg tells us the GPU story from a live
   box; GPU becomes a tracked bug, boot pipeline advances.
+
+## 2026-10-27 21:1x — boot-6 verdict (GPU alone not sufficient) + boot-7: ROM-hole map fix + SCREAMING init
+
+- Boot-6 (a57dc710, GPU initcalls blacklisted): frozen logo again, no
+  panic cycle, no beacon, stick re-extract (full-size, fresh build
+  confirmed, plist 771 B): STILL no atv1-kmsg.txt. GPU blacklisting
+  alone did not restore the network/init. Suspect space now: (a) hung
+  pre-init anyway (my own map flaw below is a live mechanism), or
+  (b) init ran but block/USB layer never appeared (save_console blind,
+  silent exec-sh fallback forever-frozen). Untestable-as-designed —
+  fixed in this build.
+- OWN BUG FOUND: memmap=exactmap memmap=256M@0 marks the legacy BIOS
+  ROM shadow (0xA0000-0xFFFFF) as usable RAM. Allocator handing out
+  ROM-backed pages = classic no-panic early hang; my synthetic map
+  carried a real defect while serving as the experiment. boot-7 map:
+  memmap=640K@0 + memmap=255M@1M (era-correct, hole excluded).
+- SCREAMING INIT (board/atv1/initramfs-init rewrite):
+  * proc+sysfs mounted at init start
+  * save_console NOW logs dmesg + /proc/partitions + /sys/block +
+    /sys/class/net, called at init START and every 10 s of a 30 s hunt
+    (log appearing = init alive; timestamps/growth = which device-
+    world existed)
+  * fatal paths -> scream_reboot(): sysrq 'b' hard reboot. NEW SIGNAL
+    ALPHABET: reboot cycle at ~35-40 s = INIT RAN, hunt failed
+    (device layer dead, and the stick will carry the inventory dump
+    IF any block device ever appeared); FOREVER-FROZEN = hung before
+    init (next blacklist round: PCI/USB initcalls).
+- Candidate: 9e5ca4972eab316a34030eaed148a6a3484c2fb7d7ef26c29cd9ce0d13b05539
+  (mach_kernel 4eb7be8a NEW — initrd changed as intended; FAT flags
+  image-internal verified).

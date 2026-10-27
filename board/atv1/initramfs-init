@@ -17,11 +17,16 @@
 #
 # /dev is devtmpfs, already mounted by the kernel (DEVTMPFS_MOUNT=y).
 PATH=/bin:/sbin
+mkdir -p /proc /sys
+mount -t proc proc /proc 2>/dev/null
+mount -t sysfs sysfs /sys 2>/dev/null
 
 # ---- console capture to the stick (works with ZERO network) ----
-# Dump the kernel ring buffer onto the atvrecv FAT partition (label
-# ATVRECV) so a unit with no working HDMI/serial/NIC still leaves a
-# readable log for whoever plugs the stick into a Mac.
+# Dump the kernel ring buffer + device-world inventory onto the atvrecv
+# FAT partition (label ATVRECV) so a unit with no working HDMI/serial/NIC
+# still leaves a readable log for whoever plugs the stick into a Mac.
+# Called at init start AND every 10 s during the root hunt: whenever the
+# stick's USB enumeration finally lands, the very next dump sticks.
 save_console() {
 	D=""
 	for d in /dev/sd?? /dev/hd??; do
@@ -32,9 +37,26 @@ save_console() {
 	[ -n "${DEV_F:-}" ] || return 0
 	mkdir -p /boot1
 	mount -t vfat "$DEV_F" /boot1 2>/dev/null || return 0
-	echo "=== atv1 initramfs console dump ===" > /boot1/atv1-kmsg.txt
-	dmesg >> /boot1/atv1-kmsg.txt 2>/dev/null
+	{
+		echo "=== atv1 initramfs console dump (up=$(/bin/sh -c 'cut -d. -f1 /proc/uptime')) ==="
+		dmesg
+		echo "--- /proc/partitions ---"; cat /proc/partitions
+		echo "--- /sys/block ---";      ls /sys/block 2>/dev/null
+		echo "--- /sys/class/net ---";  ls /sys/class/net 2>/dev/null
+	} > /boot1/atv1-kmsg.txt 2>/dev/null
 	sync
+}
+
+# hard reboot via sysrq: LOUD failure signal. A reboot cycle ~35-40 s
+# after power-on now means "init ran, root hunt failed" — forever-frozen
+# means hung BEFORE init. This is the discriminator the silent
+# `exec sh` fallback could never be.
+scream_reboot() {
+	save_console
+	echo "ATV1 INIT FAILED ROOT HUNT -> sysrq reboot" > /dev/kmsg
+	echo 1 > /proc/sys/kernel/sysrq 2>/dev/null
+	echo b > /proc/sysrq-trigger   2>/dev/null
+	exec sh   # if sysrq somehow off: serial shell remains the last resort
 }
 
 # ---- background early beacon (never blocks the root hunt) ----
@@ -84,13 +106,17 @@ case "$ROOT" in
 	/dev/*)  DEV="$ROOT" ;;
 esac
 
-mkdir -p /mnt /proc /sys
-mount -t proc proc /proc 2>/dev/null
+mkdir -p /mnt
 
-# rootwait behaviour: poll up to 60 s for the device to appear
-# (USB enumeration + PATA spin-up are slower than a CPU).
+# Scream-and-record boot: first dump the moment init exists (stick USB
+# enumeration ~5-20 s, so the start-of-day dump usually lands blind, but
+# the periodic ones below catch every later appearance).
+save_console
+
+# rootwait behaviour: poll up to 30 s, dumping the console + device
+# inventory every 10 s (log grows = init alive at that timestamp).
 i=0
-while [ "$i" -lt 60 ]; do
+while [ "$i" -lt 30 ]; do
 	if [ -n "$LABEL" ]; then
 		for d in /dev/sd* /dev/hd*; do
 			[ -b "$d" ] || continue
@@ -99,22 +125,21 @@ while [ "$i" -lt 60 ]; do
 		done
 	fi
 	[ -n "$DEV" ] && [ -b "$DEV" ] && break
+	if [ $((i % 10)) -eq 9 ]; then save_console; fi
 	i=$((i + 1))
 	sleep 1
 done
 
 if [ -z "$DEV" ] || [ ! -b "$DEV" ]; then
-	echo "atv1-init: FATAL no block device for root=$ROOT after 60s"
+	echo "atv1-init: FATAL no block device for root=$ROOT after 30s"
 	ls -l /dev/sd* /dev/hd* 2>/dev/null
-	save_console
-	exec sh   # serial shell; the beacon subshell keeps shouting if it had a lease
+	scream_reboot
 fi
 
 echo "atv1-init: mounting $DEV ($ROOT)"
 mount -o rw "$DEV" /mnt || mount -o ro "$DEV" /mnt || {
 	echo "atv1-init: FATAL cannot mount $DEV"
-	save_console
-	exec sh
+	scream_reboot
 }
 
 # switch_root needs /dev/console in the new root; the buildroot static

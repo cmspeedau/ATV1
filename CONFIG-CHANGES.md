@@ -68,6 +68,14 @@ stories behind entries: LOG.md.
   (`/data/media/*`). Skin itself: `skin/skin.atv/`, GPL-2.0-only, zero
   Apple assets (rasters generated at build, fonts Bitstream-Vera); no
   PNGs/TTFs in git (.gitignore). Kernel untouched.
+- `d7d9a5d` 10-27 — defconfig + `BR2_TARGET_GENERIC_ROOT_PASSWD=
+  "frontrow"` (owner's call: plain, documented LAN credential — README
+  §5 + SPECS. Era path verified in source: `skeleton-init-common.mk`
+  hashes the string at finalize via auto-`select`ed `HOST_MKPASSWD`,
+  method md5 = what dropbear speaks. Audited: symbol in generated
+  `.config`, `$1$…` in target shadow AND in P2 bytes. Companion
+  `91e8b38` (overlay-only, outside this ledger's files): fleet pubkey
+  baked, package `S50kodi` masked, serial root login same password.
 
 ## Effective config (first-good image, 2026-10-27)
 
@@ -81,7 +89,7 @@ stories behind entries: LOG.md.
 | Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifact | 609 MiB; skin image sha256 `396dce1b…b02679340d4d068811e47540e2cd1f07` (verify ALL OK + debugfs-proved skin in P2; supersedes `9a8d1598…` pre-skin) |
+| Artifact | 609 MiB; burn candidate sha256 `ac2b1690f6eaee25df27df5edeb27f41d1178d2bb78329dc9140549ad600e085` (skin + ssh + plain `frontrow`; verify ALL OK, debugfs-proved; supersedes `396dce1b…`/`9a8d1598…`/`6b0c907d…`) |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

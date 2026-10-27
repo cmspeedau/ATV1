@@ -298,7 +298,12 @@ Raw findings (expect scripts kept at
 
 ## Current state / next
 
-- Skin image `396dce1b…` ready to burn. dl bundle is LIVE: GitHub
+- Burn candidate `ac2b1690…` (skin + ssh access + masked package-Kodi
+  + root/frontrow): verify-image ALL OK, and debugfs inside P2 confirms
+  from the image bytes — `$1$` shadow, fleet `authorized_keys`, masked
+  `S50kodi`, auto-start `S50dropbear`. ssh = `root`/`frontrow` (plain
+  by design, README §5 + SPECS), fleet key = admin identity; serial
+  console same password (now prompts). dl bundle is LIVE: GitHub
   Release tag `1` (uploaded as `1`, not the planned `dl-2017.08.2` —
   seed-dl.sh URL follows reality; HEAD 200 @ 481,566,720 B, GitHub's own
   asset digest = the pinned sha, `tools/seed-dl.sh` green end-to-end).

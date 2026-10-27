@@ -16,7 +16,7 @@
 
 set -eu
 
-URL="https://github.com/cmspeedau/ATV1/releases/download/dl-2017.08.2/atv1-dl.tar"
+URL="https://github.com/cmspeedau/ATV1/releases/download/1/atv1-dl.tar"
 SHA256="e555a313b36ce7936e09c0edce53dff7c5700b5ceab5a260e701a8f2fdcf328a"
 
 HERE=$(cd "$(dirname "$0")/.." && pwd)

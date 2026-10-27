@@ -246,11 +246,16 @@ Raw findings (expect scripts kept at
 - PENDING HUMAN HANDS: create GitHub Release, tag `dl-2017.08.2`
   (web UI — no gh CLI here), upload `~/ATV1/images/atv1-dl.tar`.
   seed-dl.sh 404s until that upload exists.
+  → LANDED as tag `1` instead (name differs, content identical —
+    GitHub-computed asset digest matches the pin); seed-dl.sh URL
+    updated to reality. See Current state.
 
 ## Current state / next
 
-- Skin image `396dce1b…` ready to burn. One one-time manual step
-  waiting above: upload `atv1-dl.tar` as Release `dl-2017.08.2`.
+- Skin image `396dce1b…` ready to burn. dl bundle is LIVE: GitHub
+  Release tag `1` (uploaded as `1`, not the planned `dl-2017.08.2` —
+  seed-dl.sh URL follows reality; HEAD 200 @ 481,566,720 B, GitHub's own
+  asset digest = the pinned sha, `tools/seed-dl.sh` green end-to-end).
   Next milestone: USB boot of
   unit A (README §5): answers the 32-bit EFI path, unit A NIC/GPU,
   SDVO behavior, and whether skin.atv renders on swrast at 1 GHz

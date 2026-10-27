@@ -554,3 +554,25 @@ Raw findings (expect scripts kept at
   -> W1 hardens: suspect loader bp handoff deeper (heap/end_of_kexec,
   xloadflags, type_of_loader) + try early initcall audit.
   Candidate: d8dfebabdb8cffb5fbd3bfa3cb83f49534f07e0be544ae95d876a2381b183cfa
+
+## 2026-10-27 19:5x — boot-4 forensics + TWO reader false-alarms (mine) + synthetic-e82amap burn
+
+- Boot-4 (d8dfebab, flags acpi=off noapic noefi mem=256M): stick re-extract
+  initially showed the OLD 663-B plist -> "flags never tested" — FALSE
+  ALARM. Cause: STALE hdiutil mount of the previous image serving the
+  same /Volumes/ATVRECV path (07:45 mtimes gave it away) + owner's 19:53
+  extraction TRUNCATED (42.7/64 MiB, read stopped mid-partition). Raw
+  grep on the extraction bytes + fresh mount on a fresh copy: NEW plist
+  WAS on the stick (694 B, 08:11, all four flags). Boot-4 was the real
+  build; verdict stands:
+- VERDICT: sanitized environment did NOT save the kernel — still pre-init
+  fast death, no atv1-kmsg.txt. e820 QUALITY remains live (mem= shrinks
+  the map, does not replace it).
+- Burn #5 = synthetic map: memmap=exactmap memmap=256M@0 replaces the
+  boot.efi→e820 conversion entirely (that conversion has never run
+  against a live kernel). Flags-only change; mach_kernel unchanged
+  bb70e9b4; image-internal FAT verified by bytes (mount-independent).
+  Candidate: 7c74002437aa424abfa9ea74fcfa4c5bf46f0e59dd5f991ea727e30ebebba63b
+- Reader discipline update (mine): every hdiutil read starts with detach-
+  by-path + fresh copy + unique mountpoint; every extraction must verify
+  size 67108864 before mount; stderr on dd/cmp never suppressed.

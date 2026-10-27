@@ -312,8 +312,21 @@ Raw findings (expect scripts kept at
   - busybox 1.27.2 confirmed to ship arping+ping applets (build-side
     `.config` audit — target binary won't exec on the host, don't).
 - Host-side discovery commands documented in README §5.
-- Rebuild pending → verify + re-pin (this supersedes ac2b1690… as burn
-  candidate).
+- Rebuild DONE + verify green: burn candidate now
+  `bd35e7fadad9aa3b779703d21358a706cf2b2e4b56ace08f982c22d3b668f8c2`
+  (S60beacon 0755 on target, webserver settings present, verify ALL OK;
+  supersedes ac2b1690… as burn candidate).
+- STICK FORENSICS: user's stick read back `56c5c946…` ≠ ac2b1690 ⇒
+  that stick was BAD BYTES. Every unit-A boot conclusion drawn with it
+  is VOID — re-burn from bd35e7fa, verify, THEN test boot.
+- SPECS correction (owner challenge): rear USB 2.0 host port EXISTS
+  (Apple archived tech specs, 2008-12 capture; photo-import port; the
+  era patchstick entry). My "no external USB" claim was wrong.
+  Strategy fact recorded: stock EFI blesses Apple-SIGNED boot.efi
+  chains regardless of disk format ⇒ the MBR+bootia32 stick can never
+  stock-boot on any era; the signed-boot.efi restore-layout image is
+  the only stick shape with a chance (era-leniency lottery — read
+  unit A's Settings → Version).
 
 ## Current state / next
 

@@ -89,7 +89,7 @@ stories behind entries: LOG.md.
 | Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifact | 609 MiB; burn candidate sha256 `ac2b1690f6eaee25df27df5edeb27f41d1178d2bb78329dc9140549ad600e085` (skin + ssh + plain `frontrow`; verify ALL OK, debugfs-proved; supersedes `396dce1b…`/`9a8d1598…`/`6b0c907d…`) |
+| Artifact | 609 MiB; burn candidate sha256 `bd35e7fadad9aa3b779703d21358a706cf2b2e4b56ace08f982c22d3b668f8c2` (beacon build; verify ALL OK; chain: 6b0c907d → 9a8d1598 → 396dce1b → f9f81477 → ac2b1690) |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

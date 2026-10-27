@@ -349,3 +349,52 @@ Raw findings (expect scripts kept at
 - Docs are four files: README (how-to), ATV1-SPECS (hardware+provenance),
   CONFIG-CHANGES (config ledger), LOG (this). Keep them current with
   every relevant commit; keep them command-grade.
+
+## 2026-10-27 (late) — restore-layout disk: the fw-3 boot path BUILT
+
+- Owner read unit A Settings → Version: firmware 3. Not a dead end:
+  fw 3 closed USB *boot-selection* but never closed the *recovery scan*
+  (restore had to keep working) — that scan is what atv-linux-loader
+  rides, and its working examples run on exactly this era.
+- atvrecv GUID VERIFIED from source, not memory: GNU parted 3.6
+  libparted/labels/gpt.c `PARTITION_APPLE_TV_RECOVERY_GUID`
+  = **5265636F-7665-11AA-AA11-00306543ECAC** ("Reco"+"ve", Apple OUI).
+  Memory candidate 426F6F74-… = Apple *Boot* type — wrong partition
+  type, never burned. (Source fetch saga: gparted delegates to
+  libparted; gitlab raw 406s; ftp.gnu.org tarball → labels/gpt.c.)
+- boot.efi: mesu DMG downloaded (sha1 97623d8d… = loader-README pin ✓),
+  hdiutil-mounted, extracted `OSBoot/System/Library/CoreServices/boot.efi`
+  → sha256 `c7f57cc2b37af75597419b0bd2b88b357d2a6f696ce30749a073a0eba25fee40`
+  (298,800 B). Stays in images/ (gitignored) — Apple binary never enters
+  the repo; build script re-checks the sha at assemble time.
+- DummyKext 1.0 + atv-linux-loader cloned (MIT). `make KERNEL=bzImage
+  INITRAMFS=atv1-initrd.cpio.gz` (clang --target=i386-apple-darwin8,
+  CLT ld) → mach_kernel 7,899,048 B, both stages proven in the bytes.
+- initramfs: board/atv1/initramfs-init (busybox hardlinks: sh/mount/
+  blkid/switch_root/mknod…; root=LABEL→device poll 60 s; switch_root;
+  serial-sh fallback on failure) packed by tools/mkcpio-newc.py
+  (deterministic newc; era container's target cpio is unrunnable i386).
+- GPT: tools/atvrecv_gpt.py (no brew/gdisk on host; stdlib-only,
+  deterministic). THREE bugs it took real parsers to catch: entry field
+  order (attrs precedes first_lba — spec says after last_lba); missing
+  NumberOfPartitionEntries+SizeOfPartitionEntry header fields (macOS
+  read "entry size 0" → zero partitions); both invisible to my own
+  CRC self-audit (my CRC covered my own wrong layout). Standing rule:
+  GPT is only "valid" per an independent parser. Final image parses
+  clean in macOS `gpt -r show` (all 3 slices + GUIDs) and its P1 FAT
+  mounts via macOS's own driver (boot.efi sha re-checked through the
+  mount ✓, Dummy.kext + plist readable ✓).
+- post-image.sh now `tune2fs -L ATV1ROOT` on rootfs.ext4 before genimage
+  (LABEL-root is bus-independent: stick lands sdb2 behind the internal
+  sda; internal boot = sda2). Lesson re-learned the hard way:
+  standalone post-image reruns must (a) rsync repo→/work/atv1 first and
+  (b) set BINARIES_DIR+BUILD_DIR+TARGET_DIR+host bin/sbin PATH — one
+  skipped-sync run produced a mislabeled image that verify caught
+  (label: <none>) before it could burn.
+- Burn candidates (supersede bd35e7fa / cdd4269c):
+  MBR  atv1-disk.img      `1049f792948f4041e550e62b6e7bcc5bd87dc96e661a24bb495de5390b2ed597` (1,245,185 sect)
+  GPT  atv1-recv-disk.img `7d3c46810d48d6e5d55752aac6937716b4c59966d062e4f16c8eca56ce6d1135` (1,312,802 sect = 641 MiB)
+- README §5 rewritten (signature-wall truth, door #1 rear-USB restore
+  stick + read-back verify one-liner, door #2 internal); §6 SATA→PATA
+  corrected there too. One-liner caveat: backup GPT at image tail may
+  make macOS/Linux offer repair — refuse; primary GPT is authoritative.

@@ -92,8 +92,9 @@ ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
 
 | Unknown | Closed by |
 |---|---|
-| 32-bit EFI boot path (biggest risk) | first USB boot |
+| 32-bit EFI boot path (biggest risk) | first restore-stick boot |
 | stock USB-boot openness (firmware-era lottery) | read unit A: Settings → Version on screen; AND the restore-layout stick (signed boot.efi chain) — our MBR+bootia32 stick can NEVER be blessed by stock EFI regardless of era: signature, not format, is the wall |
+| atvrecv partition type GUID | VERIFIED 2026-10-27 from GNU parted 3.6 `libparted/labels/gpt.c` (`PARTITION_APPLE_TV_RECOVERY_GUID` + `flag_uuid_mapping[]`, the exact bytes gparted's `atvrecv` flag writes): **5265636F-7665-11AA-AA11-00306543ECAC** (ASCII "Reco"+"ve", Apple OUI node). My memory candidate 426F6F74-… ("Boot") was WRONG — it is a different (Apple Boot) type; never burned |
 | unit A NIC + GPU | same boot: `lspci -nn`, `ifconfig -a` |
 | SDVO/HDMI behavior | same boot: `dmesg \| grep -iE 'drm\|sdvo\|hdmi'` |
 | swrast speed at 1 GHz | first playback session |

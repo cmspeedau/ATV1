@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- atvrecv FAT root file for the restore-layout boot path (firmware 3
+     recovery scan). Read by Apple's signed boot.efi on the same volume.
+     Background Color / Boot Logo keys intentionally absent: boot.efi
+     then shows its default grey Apple logo. Kernel Flags max 1024 B. -->
+<plist version="1.0">
+<dict>
+    <key>Kernel</key>
+    <string>mach_kernel</string>
+    <key>Kernel Flags</key>
+    <string>root=LABEL=ATV1ROOT rootwait console=ttyS0,57600</string>
+</dict>
+</plist>

@@ -89,7 +89,7 @@ stories behind entries: LOG.md.
 | Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifact | 609 MiB; burn candidate sha256 `bd35e7fadad9aa3b779703d21358a706cf2b2e4b56ace08f982c22d3b668f8c2` (beacon build; verify ALL OK; chain: 6b0c907d → 9a8d1598 → 396dce1b → f9f81477 → ac2b1690) |
+| Artifacts | MBR `atv1-disk.img` 609 MiB sha256 `1049f792948f4041e550e62b6e7bcc5bd87dc96e661a24bb495de5390b2ed597` (rootfs now LABEL=ATV1ROOT; verify ALL OK; chain …→bd35e7fa→1049f792) **and** restore-layout `atv1-recv-disk.img` 641 MiB sha256 `7d3c46810d48d6e5d55752aac6937716b4c59966d062e4f16c8eca56ce6d1135` (GPT: atvrecv 64Mi + root 512Mi + data 64Mi; GPT parsed by macOS gpt; P1 FAT mounted+read by macOS driver; boot.efi sha re-verified through mount) |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

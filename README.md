@@ -122,23 +122,52 @@ labeled `ATV1DATA` and provably empty. Pin of the first-good image:
 
 ## 5. Boot from USB (Stage 0)
 
-The A1218 firmware verifies its own EFI binaries; 32-bit EFI means
-`bootia32.efi` (which is what the image carries). Two ways in:
+The A1218 firmware verifies its own EFI binaries: stock firmware boots
+**Apple-signed `boot.efi` chains only** — our MBR+`bootia32.efi` stick is
+never blessed on ANY firmware era (signature, not format, is the wall).
+The path that works on unmodified firmware 3 is Apple's own **recovery
+scan** (never closed, because restore had to keep working): a GPT disk
+whose partition type is the Apple TV Recovery GUID, holding Apple's
+signed `boot.efi`, which chainloads our `mach_kernel` (atv-linux-loader,
+MIT) with kernel+initramfs embedded.
 
-1. **ATV1sm** (distrohopper39b.com/atv1sm) — bypasses EFI verification,
-   adds USB boot. Older sibling: atv-linux-loader
-   (github.com/DistroHopper39B/atv-linux-loader).
-2. Patchstick (Play+Right on the Apple Remote at power), then
-   atv-boot-loader chainloads the BIOS menu (`board/grub-bios.cfg`).
+### Door #1 — restore-layout stick (rear USB port)
+
+Built by `tools/make-atvrecv-disk.sh` (sources + pins in its header:
+mesu DMG sha1 `97623d8d…` → `boot.efi` sha256 `c7f57cc2…`,
+DummyKext 1.0, loader repo). Burn:
 
 ```sh
 diskutil list                                # find the stick: /dev/diskN
 diskutil unmountDisk /dev/diskN
-sudo dd if=~/ATV1/images/atv1-disk.img of=/dev/rdiskN bs=4m   # silent; Ctrl-T = progress
+sudo dd if=~/ATV1/images/atv1-recv-disk.img of=/dev/rdiskN bs=4m   # Ctrl-T = progress
 sync
-# verify the burn byte-for-byte (image = 1245185 sectors exactly):
+sudo dd if=/dev/rdiskN bs=512 count=1312802 2>/dev/null | shasum -a 256
+# expect: 7d3c46810d48d6e5d55752aac6937716b4c59966d062e4f16c8eca56ce6d1135
+```
+
+Notes: the backup GPT sits at the image tail (~641 MiB), not the stick's
+end — macOS/Linux may offer to "repair"/"Initialize"; **refuse both**
+(the primary GPT is authoritative and the ATV scan only reads that).
+Plug into the REAR USB port, power on — no button combo: the recovery
+scan runs on every boot. Expect the grey Apple logo, then Linux; the
+beacon + serial (57600) tell you if HDMI stays dark.
+
+### Door #2 — internal IDE drive
+
+Same image (`atv1-recv-disk.img`) dd'ved to the 2.5" PATA/IDE disk —
+the scan does not care what bus the atvrecv partition rides.
+
+### The MBR image (`atv1-disk.img`) — what it's for now
+
+It is NOT bootable by stock firmware (see wall above); it remains the
+pipeline artifact (rootfs + kernel + grub config) and boots fine under
+ATV1sm (distrohopper39b.com/atv1sm), which bypasses the signature check
+and adds USB boot. Burn ritual for it (1245185 sectors):
+
+```sh
 sudo dd if=/dev/rdiskN bs=512 count=1245185 2>/dev/null | shasum -a 256
-# must print the sha pinned in LOG.md; re-pin here after every rebuild
+# sha pinned in LOG.md / CONFIG-CHANGES.md; re-pin after every rebuild
 ```
 
 macOS `dd` is BSD: no `status=progress`/`status=wall` (it aborts and writes
@@ -199,11 +228,14 @@ that's an EFI/boot-chain answer, not a config answer (see paths above).
 
 ## 6. Permanent install (internal drive)
 
-Standard 2.5" SATA; the image fits any drive. dd it, then grow P3 into
-the remaining space (`sgdisk`/`fdisk`/`resize2fs` are in the rootfs):
-grow the partition, `resize2fs` it. `/data` is mounted by LABEL
-(`ATV1DATA`), so nothing else changes. **Never re-image P3** — recovery
-model = re-flash P1/P2 and keep P3 (no OTA on this boot chain).
+The drive is 2.5" **PATA/IDE 44-pin** (ATA-6, e.g. Toshiba MK-series; NOT
+SATA — earlier docs were wrong, see ATV1-SPECS correction 2026-10-27).
+Any capacity ≥ 641 MiB works: dd `atv1-recv-disk.img`, then grow P3 into
+the remaining space — repartition from a Mac/Linux host (the image's
+backup GPT needs relocating to the new disk end: `sgdisk -e` on Linux),
+then `resize2fs` (in the rootfs) while unmounted. `/data` is mounted by
+LABEL (`ATV1DATA`), so nothing else changes. **Never re-image P3** —
+recovery model = re-flash P1/P2 and keep P3 (no OTA on this boot chain).
 
 ## 6a. SMB library mount (OS level)
 

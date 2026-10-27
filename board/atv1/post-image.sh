@@ -44,4 +44,13 @@ rm -f "$DATA_IMG"
 mkfs.ext4 -F -q -L ATV1DATA "$DATA_IMG" 65536
 echo "post-image: data fs $DATA_IMG (label ATV1DATA, 64 MiB, empty)"
 
+# P2 rootfs label: the restore-layout boot path (boot.efi -> mach_kernel
+# -> initramfs) resolves root=LABEL=ATV1ROOT, which must work identically
+# whether the disk is a USB stick (root becomes sdb2 behind the internal
+# drive) or the internal IDE disk itself (sda2). The MBR/grub path is
+# unaffected (it passes root= by device). tune2fs on the unmounted file
+# is offline-safe; genimage embeds the labeled bytes from here.
+tune2fs -L ATV1ROOT "$BIN_DIR/rootfs.ext4" >/dev/null
+echo "post-image: rootfs.ext4 labeled ATV1ROOT"
+
 exec support/scripts/genimage.sh -c "$BOARD_DIR/genimage.cfg"

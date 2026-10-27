@@ -1,0 +1,66 @@
+#!/bin/sh
+# atv1 initramfs /init — resolve root= to a block device, mount, hand over.
+#
+# Used ONLY by the restore-layout boot path (boot.efi -> mach_kernel with
+# this cpio embedded). The kernel cmdline arrives via com.apple.Boot.plist
+# "Kernel Flags": root=LABEL=ATV1ROOT rootwait console=ttyS0,57600
+#
+# Why an initramfs at all: the kernel cannot resolve root=LABEL= itself,
+# and device letters shift between a USB-stick boot (internal drive is
+# sda, stick lands on sdb) and an internal-disk boot (root IS sda).
+# Label lookup is the only device-independent answer.
+#
+# /dev is devtmpfs, already mounted by the kernel (DEVTMPFS_MOUNT=y).
+PATH=/bin:/sbin
+
+ROOT=""
+for a in $(cat /proc/cmdline); do
+	case "$a" in
+		root=*) ROOT="${a#root=}" ;;
+	esac
+done
+[ -n "$ROOT" ] || ROOT="LABEL=ATV1ROOT"
+
+DEV=""
+LABEL=""
+case "$ROOT" in
+	LABEL=*) LABEL="${ROOT#LABEL=}" ;;
+	/dev/*)  DEV="$ROOT" ;;
+esac
+
+mkdir -p /mnt /proc /sys
+mount -t proc proc /proc 2>/dev/null
+
+# rootwait behaviour: poll up to 60 s for the device to appear
+# (USB enumeration + PATA spin-up are slower than a CPU).
+i=0
+while [ "$i" -lt 60 ]; do
+	if [ -n "$LABEL" ]; then
+		for d in /dev/sd* /dev/hd*; do
+			[ -b "$d" ] || continue
+			L=$(blkid -o value -s LABEL "$d" 2>/dev/null)
+			[ "$L" = "$LABEL" ] && DEV="$d" && break
+		done
+	fi
+	[ -n "$DEV" ] && [ -b "$DEV" ] && break
+	i=$((i + 1))
+	sleep 1
+done
+
+if [ -z "$DEV" ] || [ ! -b "$DEV" ]; then
+	echo "atv1-init: FATAL no block device for root=$ROOT after 60s"
+	ls -l /dev/sd* /dev/hd* 2>/dev/null
+	exec sh
+fi
+
+echo "atv1-init: mounting $DEV ($ROOT)"
+mount -o rw "$DEV" /mnt || mount -o ro "$DEV" /mnt || {
+	echo "atv1-init: FATAL cannot mount $DEV"
+	exec sh
+}
+
+# switch_root needs /dev/console in the new root; the buildroot static
+# /dev provides it, but guarantee it (harmless if present).
+[ -c /mnt/dev/console ] || mknod /mnt/dev/console c 5 1 2>/dev/null
+
+exec switch_root /mnt /sbin/init

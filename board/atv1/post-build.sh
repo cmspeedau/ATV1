@@ -8,6 +8,12 @@ set -eu
 # overlay script executable regardless.
 [ -f "$TARGET_DIR/etc/atv1/startkodi.sh" ] && chmod 0755 "$TARGET_DIR/etc/atv1/startkodi.sh"
 [ -f "$TARGET_DIR/etc/init.d/S20datadirs" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S20datadirs"
+[ -f "$TARGET_DIR/etc/init.d/S50kodi" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S50kodi"
+
+# ssh fleet pubkey (README §5): tighten perms regardless of how the
+# overlay was copied (dropbear refuses sloppy authorized_keys modes).
+[ -d "$TARGET_DIR/root/.ssh" ] && chmod 0700 "$TARGET_DIR/root/.ssh"
+[ -f "$TARGET_DIR/root/.ssh/authorized_keys" ] && chmod 0600 "$TARGET_DIR/root/.ssh/authorized_keys"
 
 # Prebuilt Rust client (ARCHITECTURE doc; era Buildroot has no rustc —
 # see package/atv1-client/Config.in and tools/build-client.sh).

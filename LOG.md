@@ -250,6 +250,33 @@ Raw findings (expect scripts kept at
     GitHub-computed asset digest matches the pin); seed-dl.sh URL
     updated to reality. See Current state.
 
+## 2026-10-27 (late-er) — ssh reality check: enabled-but-locked, plus a
+## double-Kodi bug caught before first boot
+
+- Question asked: "ssh enabled and password/user noted?" Evidence from
+  the BUILT target, not memory:
+  - dropbear IS started at boot — the buildroot 2017.08 dropbear package
+    ships its own S50dropbear (provenance: dropbear.mk); runs with `-R`
+    (host key regenerated every boot).
+  - root's shadow is `root::` (EMPTY — deliberate: passwordless serial
+    console). dropbear refuses blank passwords over ssh by default →
+    as committed, ssh was enabled but NO-ONE-ELSE could log in: no
+    password, no key. Not "noted" — unfixable-by-design; fixed properly:
+  - fleet ed25519 keypair generated on the admin Mac
+    (`~/.ssh/atv1_fleet`, private key NEVER in git); PUBLIC key baked to
+    overlay `root/.ssh/authorized_keys`; post-build enforces 0700/0600
+    (dropbear is picky, so are we). README §5 documents both paths:
+    key login, and serial `passwd` as the no-key fallback (empty shadow
+    returns on every reflash — the key is the permanent identity).
+- BUG caught en route: the kodi package ALSO installs S50kodi, starting
+  a second Kodi at boot racing the inittab-respawned kiosk. Masked with
+  an overlay stub (overlays copy after packages; stub is a loud no-op).
+- startkodi.sh header comment said "i915 deliberately absent from the
+  kernel" — stale from the pre-heterogeneous-fleet era and flatly
+  wrong now; rewritten to describe both units (card0=i915 on A; on B
+  i915 grabs card0, 7300 is card1, X-pin = GPU-select TODO).
+- Rebuild needed (overlay changed): re-pin sha after.
+
 ## Current state / next
 
 - Skin image `396dce1b…` ready to burn. dl bundle is LIVE: GitHub

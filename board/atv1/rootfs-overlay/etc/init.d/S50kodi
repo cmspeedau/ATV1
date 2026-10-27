@@ -1,0 +1,12 @@
+#!/bin/sh
+# MASKED ON PURPOSE. buildroot 2017.08's kodi package installs its own
+# S50kodi that launches a second Kodi at boot, racing the kiosk policy:
+# the respawned kiosk on tty1 (/etc/atv1/startkodi.sh, driven by
+# /etc/inittab). This overlay stub — overlays copy after packages —
+# makes the package script a no-op.
+
+case "$1" in
+	start|stop|restart|reload) : ;;
+	*) echo "Usage: $0 {start|stop|restart} (masked: kiosk lives in inittab)" >&2 ;;
+esac
+exit 0

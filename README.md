@@ -153,6 +153,25 @@ Still unobserved (first boot is the test): the 32-bit EFI path itself,
 unit A's NIC/GPU, SDVO/HDMI hotplug quirks, swrast speed at 1 GHz.
 Fleet/unit identities and evidence: ATV1-SPECS.md.
 
+**SSH access (root).** dropbear runs at boot (the package's `S50dropbear`;
+`-R` ⇒ the host key regenerates every boot — expect a confirmation each
+time, or add `-o UserKnownHostsFile=/dev/null`). Authentication is
+**public-key only**: root's shadow password is intentionally empty (that
+is what lets the serial console in), and dropbear refuses blank passwords
+over ssh by design. The image carries the fleet pubkey in
+`/root/.ssh/authorized_keys`; the private key never enters git — on the
+admin machine it lives at `~/.ssh/atv1_fleet`:
+
+```sh
+ssh -i ~/.ssh/atv1_fleet -o UserKnownHostsFile=/dev/null \
+    -o StrictHostKeyChecking=no root@<atv1-ip>
+```
+
+No key handy? Serial console (57600 8N1): `login:` root, empty password,
+then `passwd` — a set password also enables dropbear password logins,
+until the next re-flash (every fresh image boots with the empty shadow
+again; the key is the permanent identity).
+
 ## 6. Permanent install (internal drive)
 
 Standard 2.5" SATA; the image fits any drive. dd it, then grow P3 into

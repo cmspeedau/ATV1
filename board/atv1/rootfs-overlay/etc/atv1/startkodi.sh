@@ -1,9 +1,11 @@
 #!/bin/sh
 # ATV1 kiosk: X + Kodi on tty1, driven by /etc/inittab respawn.
 #
-# The 7300 (DRI nv40) must be card0 — i915 is deliberately absent from the
-# kernel, so there is only ever one GPU device. If /dev/dri/card0 is slow to
-# appear on a cold boot, the short wait below handles it.
+# Heterogeneous fleet: on unit A card0 is i915 (GMA950). On unit B BOTH
+# drivers probe — i915 claims card0 for the iGPU, the 7300 lands on
+# card1 — so X must be pinned to the right screen by the xstartup
+# GPU-select (roadmap TODO in LOG.md); /dev/dri itself just needs any
+# card bound. Cold boot from USB is slowest; wait up to 15 s.
 
 # Give DRM/nouveau a moment after cold boot (USB storage boot is slowest)
 i=0

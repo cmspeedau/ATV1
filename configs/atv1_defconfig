@@ -24,6 +24,14 @@ BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
 # ---- System ----
 BR2_TARGET_GENERIC_HOSTNAME="atv1"
 BR2_TARGET_GENERIC_ISSUE="ATV1 Kodi appliance"
+# Plain root password, noted in README §5 + ATV1-SPECS on purpose: a
+# LAN kiosk people should be able to use (anyone, not only key-holders).
+# 'frontrow' follows the NitoTV-era convention the modded units already
+# carry — one credential story across the fleet. Resets with every
+# reflash; the ed25519 fleet key in the overlay is the admin identity.
+# (kconfig auto-selects host-mkpasswd here; era md5 method — dropbear
+# speaks md5crypt. Audit the generated .config after defconfig runs.)
+BR2_TARGET_GENERIC_ROOT_PASSWD="frontrow"
 BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_ATV1_PATH)/board/atv1/post-image.sh"

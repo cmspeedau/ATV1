@@ -277,6 +277,25 @@ Raw findings (expect scripts kept at
   i915 grabs card0, 7300 is card1, X-pin = GPU-select TODO).
 - Rebuild needed (overlay changed): re-pin sha after.
 
+## 2026-10-27 (later) — root access policy: plain password, documented
+
+- Owner's call: ssh must be PLAIN so other people can use the units,
+  and the credential must be NOTED. Implemented:
+  defconfig `BR2_TARGET_GENERIC_ROOT_PASSWD="frontrow"` (era mechanism
+  verified in skeleton-init-common.mk + system/Config.in: plain string
+  hashed at finalize by host-mkpasswd, auto-`select`ed; method md5;
+  ENABLE_ROOT_LOGIN already y). Fleet key stays as the admin identity —
+  password is the human door, the key is ours.
+- Why "frontrow": the modded unit's established convention (SPECS) —
+  one credential story across the fleet; LAN-only appliance by design
+  (no off-LAN exposure is a requirement, not a suggestion). Resets on
+  every re-flash — stated in README/SPECS so nobody believes it's
+  durable security.
+- Docs: README §5 rewritten (password-first, key second, serial same
+  password); SPECS gains an "Access on OUR image" section with
+  provenance tags. Serial console note: it now PROMPTS for the password
+  (previously empty-shadow = no prompt).
+
 ## Current state / next
 
 - Skin image `396dce1b…` ready to burn. dl bundle is LIVE: GitHub

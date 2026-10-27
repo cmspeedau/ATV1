@@ -69,6 +69,18 @@ ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
 | screen pick | default probe OK | [E] X probes iGPU first → xstartup must force nouveau (roadmap) |
 | NIC | 8139too [E] | 8139too [V] |
 
+## Access on OUR image (documented by design)
+
+- ssh (dropbear, auto-start): `root` / `frontrow` — plain on purpose,
+  a LAN appliance people must be able to administer, same convention
+  unit B's mod already uses. Resets every re-flash. [V at defconfig;
+  first-boot confirmation pending]
+- Admin key (no password): ed25519 fleet keypair; public half baked to
+  `/root/.ssh/authorized_keys`, private half lives ONLY at
+  `~/.ssh/atv1_fleet` on the admin machine. [V target audit]
+- Serial console 57600 8N1: `login:` root, same password.
+- Kodi kiosk needs no credential; media/management = coordinator.
+
 ## Open items (observation that closes each)
 
 | Unknown | Closed by |

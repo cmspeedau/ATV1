@@ -153,24 +153,28 @@ Still unobserved (first boot is the test): the 32-bit EFI path itself,
 unit A's NIC/GPU, SDVO/HDMI hotplug quirks, swrast speed at 1 GHz.
 Fleet/unit identities and evidence: ATV1-SPECS.md.
 
-**SSH access (root).** dropbear runs at boot (the package's `S50dropbear`;
-`-R` ⇒ the host key regenerates every boot — expect a confirmation each
-time, or add `-o UserKnownHostsFile=/dev/null`). Authentication is
-**public-key only**: root's shadow password is intentionally empty (that
-is what lets the serial console in), and dropbear refuses blank passwords
-over ssh by design. The image carries the fleet pubkey in
-`/root/.ssh/authorized_keys`; the private key never enters git — on the
-admin machine it lives at `~/.ssh/atv1_fleet`:
+**SSH access (root) — plain by design.** dropbear runs from boot (the
+package's `S50dropbear`; `-R` ⇒ host key regenerates every boot, so expect
+the yes/no once per session or add `-o UserKnownHostsFile=/dev/null`):
 
 ```sh
-ssh -i ~/.ssh/atv1_fleet -o UserKnownHostsFile=/dev/null \
-    -o StrictHostKeyChecking=no root@<atv1-ip>
+ssh root@<atv1-ip>        # password: frontrow
 ```
 
-No key handy? Serial console (57600 8N1): `login:` root, empty password,
-then `passwd` — a set password also enables dropbear password logins,
-until the next re-flash (every fresh image boots with the empty shadow
-again; the key is the permanent identity).
+`root` / `frontrow` is the fleet default, written here on purpose: this
+is a LAN appliance meant to be usable by more than one person, and the
+password follows the NitoTV-era convention the modded units already
+carry. It RESETS on every re-flash — convenience, not a defense line;
+this box must not be reachable off-LAN.
+
+Admins with the fleet key (private half at `~/.ssh/atv1_fleet` on the
+admin machine, public half baked into the image) get in without a password:
+
+```sh
+ssh -i ~/.ssh/atv1_fleet root@<atv1-ip>
+```
+
+Serial console (57600 8N1): `login:` root, same password.
 
 ## 6. Permanent install (internal drive)
 

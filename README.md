@@ -134,8 +134,15 @@ The A1218 firmware verifies its own EFI binaries; 32-bit EFI means
 ```sh
 diskutil list                                # find the stick: /dev/diskN
 diskutil unmountDisk /dev/diskN
-sudo dd if=~/ATV1/images/atv1-disk.img of=/dev/rdiskN bs=4m status=progress
+sudo dd if=~/ATV1/images/atv1-disk.img of=/dev/rdiskN bs=4m   # silent; Ctrl-T = progress
+sync
+# verify the burn byte-for-byte (image = 1245185 sectors exactly):
+sudo dd if=/dev/rdiskN bs=512 count=1245185 2>/dev/null | shasum -a 256
+# must print the sha pinned in LOG.md; re-pin here after every rebuild
 ```
+
+macOS `dd` is BSD: no `status=progress`/`status=wall` (it aborts and writes
+nothing). SIGINFO (Ctrl-T) prints live transfer stats.
 
 Use a modest USB 2.0 stick (old EHCI; avoid power-hungry drives).
 Console: onboard UART 57600 8N1, or HDMI — GRUB menu, pick the USB

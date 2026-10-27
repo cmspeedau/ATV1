@@ -576,3 +576,23 @@ Raw findings (expect scripts kept at
 - Reader discipline update (mine): every hdiutil read starts with detach-
   by-path + fresh copy + unique mountpoint; every extraction must verify
   size 67108864 before mount; stderr on dd/cmp never suppressed.
+
+## 2026-10-27 20:4x — boot-5: SYNTHETIC MAP REMOVED THE PANIC (hang replaces cycle) -> GPU-initcall suspect
+
+- Boot-5 (7c740024, memmap=exactmap memmap=256M@0): owner observed
+  FROZEN LOGO with NO ~5s reboot cycle — panic=5 armed, so: no panic.
+  Full-size clean stick extraction: still NO atv1-kmsg.txt; plist 715 B
+  confirms real build ran. => kernel survives memory setup now (boot.efi
+  map proven poison for 3-4's fast deaths) but hangs BEFORE /init and
+  before any network/storage visible effect.
+- Suspect #1 now = device initcalls (run after memory init, before init):
+  GMA950 was POSTed by EFI GOP, never by legacy VGA ROM; 4.9 i915/nouveau
+  register-wait behavior against an engine it doesn't expect = classic
+  no-panic hang. Fits every silence (no log, no beacon, no panic).
+- Boot-6 = a57dc710… (flags-only, mach_kernel unchanged bb70e9b4): adds
+  nomodeset + initcall_blacklist=i915_init,nouveau_drm_init. NAMES
+  VERIFIED IN 4.9 SOURCE: module_init(i915_init) in i915_pci.c:513;
+  module_init(nouveau_drm_init) in nouveau_drm.c:1132 (NOT nouveau_init —
+  the naive guess would have been a silent no-op).
+  If base system lives: ssh in, dmesg tells us the GPU story from a live
+  box; GPU becomes a tracked bug, boot pipeline advances.

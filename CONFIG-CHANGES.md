@@ -89,7 +89,7 @@ stories behind entries: LOG.md.
 | Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifacts | MBR `atv1-disk.img` 609 MiB sha256 `db8c3d351b4913bc74505f696cd13cd1eafe54d32e9e4574f5bd0a778a719ce1` **and** restore-layout `atv1-recv-disk.img` 641 MiB sha256 `d4dacb31b14a3a10ed2f4893e0fa6f930393f8d6e17d2801281155d3462d63ce` — fix+logs build (loader payload_offset patch, FB/efifb console, initramfs+rootfs stick log dump); chain …→23b1e4af→f8d41b9c→d4dacb31 / …→c3ca5b94→db8c3d35 |
+| Artifacts | MBR `atv1-disk.img` 609 MiB sha256 `56f345dd909feb4dd8079318d20a5ad9fe33061d1530ebd04c9a6355fa2e20e8` **and** restore-layout `atv1-recv-disk.img` 641 MiB sha256 `ab6c65c2e540ad6c930188d2382e87b0724184f18e0f7574c502ea371949f56f` — efifb-experiment build (FB_EFI OFF single-variable revert, recorder dmesg+sync fix, panic=5; mach_kernel bb70e9b4 content-proven fresh after stale-object fix, LOG 18:4x); chain …→23b1e4af→f8d41b9c→d4dacb31→afe0cd8f(stale-superseded)→ab6c65c2 / …→c3ca5b94→db8c3d35→56f345dd |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

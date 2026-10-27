@@ -492,3 +492,41 @@ Raw findings (expect scripts kept at
 - Candidates (fix+logs build): MBR db8c3d35…; GPT atv1-recv-disk.img
   d4dacb31b14a3a10ed2f4893e0fa6f930393f8d6e17d2801281155d3462d63ce
   (mach_kernel 25cddafa…, initrd a50429e4…). verify-image ALL OK.
+
+## 2026-10-27 18:4x — stick-forensics verdict + STALE-OBJECT TRAP found (retread of "rebuilt")
+
+- Boot test 2 forensics (owner-extracted P1, read via hdiutil — macOS FAT
+  driver still refuses mtools FSInfo): atv1-kmsg.txt ABSENT through a
+  proven-working mount ⇒ death BEFORE /init. Burn integrity re-proven at
+  file level (FAT mach_kernel sha == build 25cddafa; plist correct).
+- Recorder was itself broken: initrd applet list lacked dmesg AND sync
+  (verified by extracting the built cpio: 16 links, no dmesg). Even a
+  living kernel would have logged a stub, not the ring. FIXED: dmesg+sync
+  added to stage 1 list.
+- kconfig truth: CONFIG_FB is SELECTed by DRM (drivers/gpu/drm/Kconfig:45)
+  — no fragment can remove it; it was =y in ALL builds incl. the booting
+  era. The ONLY real kernel diff in the failed build was CONFIG_FB_EFI
+  (+plist console=tty0). efifb probe is the death-site suspect (binds
+  boot.efi's framebuffer via screen_info after initcalls, before /init).
+- STALE-OBJECT TRAP (the big one): loader Makefile has `%.o: %.c` with NO
+  dep on kernel_bin.h/initramfs_bin.h → header regeneration did NOT
+  recompile linux.o → every make-atvrecv-disk re-run after the f8 round
+  RELINKED STALE linux.o. f8d41b9c→d4dacb31→(afe0cd8f) all carried the
+  SAME mach_kernel bytes 25cddafa. RETRACT: "d4dacb31 rebuilt the kernel
+  blob" — it relinked the old one. FIX: stage 2 now rm -f *.o. Content
+  proof chain now mandatory (embedded-bzImage byte-compare, below).
+- Boot-2 content proof: decompressed the burned vmlinux (zlib wbits=31)
+  — efifb symbols PRESENT (14) ⇒ the FB_EFI kernel DID run on hardware
+  and died pre-init. Suspect stands on proof, not inference.
+- Experiment build (FB_EFI OFF via canonical "# CONFIG_FB_EFI is not
+  set" + recorder + panic=5 panic_on_oops=1, console=tty0 dropped):
+  recv ab6c65c2e540ad6c930188d2382e87b0724184f18e0f7574c502ea371949f56f
+  (1312802 sect). mach_kernel bb70e9b4… CONTENT-PROVEN: embedded bzImage
+  (a12906fb…, 7,518,448 B, FB_EFI OFF) and initrd (9df2383b… w/ dmesg+
+  sync) byte-identical to build outputs inside it. MBR atv1-disk.img
+  56f345dd… (grub path, new kernel too).
+- OUTCOMES: beacon/stick-log ⇒ kernel booted (efifb convicted; re-add
+  later with correct screen_info handling). Visible 5 s reboot cycle ⇒
+  kernel panics pre-init, panic=5 caught it — next suspect is generic
+  early kernel. Identical frozen logo ⇒ efifb CLEARED; suspect moves to
+  first-run generic early kernel / loader bp handoff.

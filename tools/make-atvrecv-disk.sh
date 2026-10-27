@@ -50,7 +50,7 @@ docker run --rm -v atv1-work:/work -v "$IMG:/export" -v "$ATV1:/atv1-src:ro" \
     rm -rf "$W"; mkdir -p "$W/bin" "$W/sbin" "$W/dev" "$W/proc" "$W/sys" \
         "$W/mnt" "$W/root" "$W/tmp"
     for a in sh ash mount umount mkdir sleep cat blkid switch_root ls mknod \
-             ifconfig udhcpc arping ping route; do
+             ifconfig udhcpc arping ping route dmesg sync; do
         ln -f "$T/bin/busybox" "$W/bin/$a"
     done
     cp /atv1-src/board/atv1/initramfs-init "$W/init"
@@ -64,7 +64,7 @@ echo "== stage 2: mach_kernel (atv-linux-loader, clang --target=i386-apple-darwi
   && { grep -q ATV1-FIX linux.c \
        || patch -p1 -i "$ATV1/tools/patches/atv-loader-payload-offset.patch" \
        || fail "loader payload-offset patch would not apply"; } \
-  && rm -f mach_kernel kernel_bin.h initramfs_bin.h \
+  && rm -f mach_kernel kernel_bin.h initramfs_bin.h *.o \
   && make KERNEL="$IMG/bzImage" INITRAMFS="$IMG/atv1-initrd.cpio.gz" >/dev/null \
   && cp mach_kernel "$IMG/mach_kernel" )
 [ -s "$IMG/mach_kernel" ] || fail "mach_kernel build produced nothing"

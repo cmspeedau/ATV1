@@ -44,12 +44,18 @@ CONFIG_X86_PAT=y
 # ---- Boot / console ----
 CONFIG_EFI=y
 CONFIG_EFI_MIXED=y
-# efifb: boot.efi's framebuffer, handed to us via screen_info by the
-# atv-linux-loader. With FB+fbcon this makes the kernel's own messages
-# visible on HDMI from early boot — the "pink screen" becomes a text
-# console we can read without a serial cable (2026-10-27 bring-up).
-CONFIG_FB=y
-CONFIG_FB_EFI=y
+# efifb EXPERIMENT, REVERTED (2026-10-27 boot test 2): unit A froze on
+# the grey logo, no beacon, no stick log — death BEFORE /init, which is
+# exactly where the efifb platform driver binds the boot.efi
+# framebuffer handed over via screen_info. NOTE for future readers:
+# CONFIG_FB cannot be removed at all here — DRM (drivers/gpu/drm/
+# Kconfig:45) SELECTs it, so it was =y in the old booting builds too;
+# the ONLY config diff the failed build really carried was FB_EFI (and
+# the plist console=tty0). Without the efifb driver, fbcon has no
+# device to bind and FB sits idle — proven-OK baseline behavior. If
+# this build still dies identically, efifb is CLEARED and the next
+# suspect is the kernel's first-ever run on this silicon generally.
+# CONFIG_FB_EFI is not set
 CONFIG_BINFMT_ELF=y
 CONFIG_SERIAL_8250=y
 CONFIG_SERIAL_8250_CONSOLE=y

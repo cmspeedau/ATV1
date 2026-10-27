@@ -1,0 +1,34 @@
+diff --git a/linux.c b/linux.c
+index edd8cae..301817b 100644
+--- a/linux.c
++++ b/linux.c
+@@ -81,8 +81,18 @@ noreturn void load_linux(void)
+ 
+     trace("Found valid Linux kernel.\n");
+ 
+-    // Find actual length of the kernel
+-    uint32_t real_kernel_len = kernel_bin_len - ((kernel_bin[0x1f1] + 1) * 512);
++    // Find actual length of the kernel.
++    // ATV1-FIX: the payload can start AFTER (setup_sects+1)*512 when the image
++    // carries an EFI stub section (our buildroot 4.9 CONFIG_EFI=y kernel has
++    // payload_offset = 128). Legacy arithmetic lands inside the stub and the
++    // kernel triple-faults on entry. Honour setup_header payload_offset
++    // (+0x57); it is 0 for stub-less kernels so legacy images still work.
++    uint32_t payload_start = (kernel_bin[0x1f1] + 1) * 512;
++    uint32_t payload_off_field = 0;
++    memcpy(&payload_off_field, kernel_bin + 0x1f1 + 0x57, 4);
++    payload_start += payload_off_field;
++
++    uint32_t real_kernel_len = kernel_bin_len - payload_start;
+ 
+     // Determine where a safe place in memory to copy the kernel to is
+     uint32_t kernel_loadaddr = ROUND_UP(gBA->kernel_base + gBA->kernel_size + initramfs_bin_len,
+@@ -90,7 +100,7 @@ noreturn void load_linux(void)
+ 
+     // Copy kernel to the correct address
+     trace("Copying kernel to 0x%X...", kernel_loadaddr);
+-    memcpy((void *) kernel_loadaddr, &kernel_bin[(kernel_bin[0x1f1] + 1) * 512], real_kernel_len);
++    memcpy((void *) kernel_loadaddr, &kernel_bin[payload_start], real_kernel_len);
+     dprintf("done.\n");
+ 
+     // Zero the boot parameters

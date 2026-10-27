@@ -1,0 +1,41 @@
+#!/bin/sh
+# S61logdump — keep the kernel console on the stick, continuously.
+#
+# Mounts the atvrecv FAT partition (LABEL=ATVRECV — partition 1 of the
+# same stick/SSD the box booted from) and rewrites atv1-kmsg.txt with
+# the live ring buffer every 20 s. This is the no-network, no-serial,
+# no-HDI log: pull the stick, plug it into a Mac, read the boot.
+# The initramfs (board/atv1/initramfs-init) already dumps once before
+# handover; this keeps it current after switch_root.
+PIDF=/var/run/atv1-logdump.pid
+
+case "$1" in
+  start)
+    (
+      D=$(blkid -l -t LABEL=ATVRECV -o device 2>/dev/null | head -n1)
+      [ -n "$D" ] || { echo "ATV1 logdump: no ATVRECV partition" > /dev/kmsg; exit 0; }
+      mkdir -p /boot
+      mount -t vfat "$D" /boot 2>/dev/null || mount -o remount,rw /boot 2>/dev/null
+      echo "ATV1 logdump: kernel ring -> $D:/atv1-kmsg.txt every 20s" > /dev/kmsg
+      while :; do
+        dmesg > /boot/atv1-kmsg.txt 2>/dev/null && sync
+        [ -f /root/.kodi/temp/kodi.log ] &&
+          cp -f /root/.kodi/temp/kodi.log /boot/atv1-kodi.log 2>/dev/null && sync
+        sleep 20
+      done
+    ) >/dev/null 2>&1 &
+    echo $! > "$PIDF"
+    ;;
+  stop)
+    [ -f "$PIDF" ] && kill "$(cat "$PIDF")" 2>/dev/null
+    rm -f "$PIDF"
+    ;;
+  restart|reload)
+    "$0" stop; sleep 1; "$0" start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+exit 0

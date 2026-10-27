@@ -9,6 +9,6 @@
     <key>Kernel</key>
     <string>mach_kernel</string>
     <key>Kernel Flags</key>
-    <string>root=LABEL=ATV1ROOT rootwait console=ttyS0,57600</string>
+    <string>root=LABEL=ATV1ROOT rootwait console=ttyS0,57600 console=tty0</string>
 </dict>
 </plist>

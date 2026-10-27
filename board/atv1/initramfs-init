@@ -18,6 +18,25 @@
 # /dev is devtmpfs, already mounted by the kernel (DEVTMPFS_MOUNT=y).
 PATH=/bin:/sbin
 
+# ---- console capture to the stick (works with ZERO network) ----
+# Dump the kernel ring buffer onto the atvrecv FAT partition (label
+# ATVRECV) so a unit with no working HDMI/serial/NIC still leaves a
+# readable log for whoever plugs the stick into a Mac.
+save_console() {
+	D=""
+	for d in /dev/sd?? /dev/hd??; do
+		[ -b "$d" ] || continue
+		L=$(blkid -o value -s LABEL "$d" 2>/dev/null)
+		[ "$L" = "ATVRECV" ] && DEV_F="$d" && break
+	done
+	[ -n "${DEV_F:-}" ] || return 0
+	mkdir -p /boot1
+	mount -t vfat "$DEV_F" /boot1 2>/dev/null || return 0
+	echo "=== atv1 initramfs console dump ===" > /boot1/atv1-kmsg.txt
+	dmesg >> /boot1/atv1-kmsg.txt 2>/dev/null
+	sync
+}
+
 # ---- background early beacon (never blocks the root hunt) ----
 (
 	IP=""
@@ -87,12 +106,14 @@ done
 if [ -z "$DEV" ] || [ ! -b "$DEV" ]; then
 	echo "atv1-init: FATAL no block device for root=$ROOT after 60s"
 	ls -l /dev/sd* /dev/hd* 2>/dev/null
+	save_console
 	exec sh   # serial shell; the beacon subshell keeps shouting if it had a lease
 fi
 
 echo "atv1-init: mounting $DEV ($ROOT)"
 mount -o rw "$DEV" /mnt || mount -o ro "$DEV" /mnt || {
 	echo "atv1-init: FATAL cannot mount $DEV"
+	save_console
 	exec sh
 }
 
@@ -100,4 +121,6 @@ mount -o rw "$DEV" /mnt || mount -o ro "$DEV" /mnt || {
 # /dev provides it, but guarantee it (harmless if present).
 [ -c /mnt/dev/console ] || mknod /mnt/dev/console c 5 1 2>/dev/null
 
+echo "ATV1 initramfs: handover to switch_root" > /dev/kmsg
+save_console
 exec switch_root /mnt /sbin/init

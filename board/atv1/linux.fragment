@@ -44,6 +44,12 @@ CONFIG_X86_PAT=y
 # ---- Boot / console ----
 CONFIG_EFI=y
 CONFIG_EFI_MIXED=y
+# efifb: boot.efi's framebuffer, handed to us via screen_info by the
+# atv-linux-loader. With FB+fbcon this makes the kernel's own messages
+# visible on HDMI from early boot — the "pink screen" becomes a text
+# console we can read without a serial cable (2026-10-27 bring-up).
+CONFIG_FB=y
+CONFIG_FB_EFI=y
 CONFIG_BINFMT_ELF=y
 CONFIG_SERIAL_8250=y
 CONFIG_SERIAL_8250_CONSOLE=y

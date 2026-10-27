@@ -61,6 +61,9 @@ docker run --rm -v atv1-work:/work -v "$IMG:/export" -v "$ATV1:/atv1-src:ro" \
 
 echo "== stage 2: mach_kernel (atv-linux-loader, clang --target=i386-apple-darwin8) =="
 ( cd "$LOADER" \
+  && { grep -q ATV1-FIX linux.c \
+       || patch -p1 -i "$ATV1/tools/patches/atv-loader-payload-offset.patch" \
+       || fail "loader payload-offset patch would not apply"; } \
   && rm -f mach_kernel kernel_bin.h initramfs_bin.h \
   && make KERNEL="$IMG/bzImage" INITRAMFS="$IMG/atv1-initrd.cpio.gz" >/dev/null \
   && cp mach_kernel "$IMG/mach_kernel" )

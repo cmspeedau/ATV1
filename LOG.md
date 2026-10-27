@@ -465,3 +465,30 @@ Raw findings (expect scripts kept at
 - Consequence for the boot test: the STICK still holds the OLD mute
   image (7d3c4681); the beacon2 image (23b1e4af) has never been on
   hardware. Re-burn disk4 with the guard, then run the boot test.
+
+## 2026-10-27 17:4x — root cause #2 FOUND in loader arithmetic + log-anywhere plumbing
+
+- Forensics on bzImage vs loader source (linux.c): loader computes payload at
+  (setup_sects+1)*512 = 15872; OUR kernel's authoritative payload_offset
+  field (setup_header +0x57, read per bootparam.h in-tree) = 128 → real
+  payload at 16000 (gzip magic verified there). EFI-stub section between
+  setup and payload ⇒ legacy arithmetic lands 128 B early ⇒ jump into stub
+  tail ⇒ instant death. Explains logo→pink→silence EXACTLY. Debian images
+  the loader author tested apparently align differently — our kernel
+  doesn't. Fix: tools/patches/atv-loader-payload-offset.patch (MIT vendor
+  tree; honored automatically by make-atvrecv-disk.sh stage 2 tripwire).
+- Console visibility while at it: kernel fragment += CONFIG_FB +
+  CONFIG_FB_EFI (efifb takes the boot.efi framebuffer the loader hands
+  over via screen_info); plist adds console=tty0. Pink should become
+  readable text once the payload fix lands.
+- LOG ANYWHERE (owner ask "output to a log file"), two channels:
+  1) initramfs save_console(): dumps kernel ring to the ATVRECV FAT
+     partition (/atv1-kmsg.txt) before handover AND on both fatal paths.
+  2) S61logdump (rootfs): mounts ATVRECV at /boot, rewrites
+     /boot/atv1-kmsg.txt every 20 s + copies kodi.log to
+     /boot/atv1-kodi.log. Pull stick → read on Mac. Network-free,
+     serial-free, HDMI-independent.
+  Plus (existing): ssh fleet key once IP known = full journal/dmesg.
+- Candidates (fix+logs build): MBR db8c3d35…; GPT atv1-recv-disk.img
+  d4dacb31b14a3a10ed2f4893e0fa6f930393f8d6e17d2801281155d3462d63ce
+  (mach_kernel 25cddafa…, initrd a50429e4…). verify-image ALL OK.

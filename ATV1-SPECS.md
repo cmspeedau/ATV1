@@ -49,6 +49,13 @@ ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
 - Original Apple ATV OS; SSH closed; :8080 web resets non-Safari; DAAP :3689. [V]
 - MAC `00:23:32:33:FC:21`. [V]
 - GPU (GMA950) and NIC (RTL8139): expected from unit B + Apple spec. [E]
+- Rear panel carries a **USB 2.0 host port** (photo import; also the era
+  patchstick entry point) — owner-observed, and Apple's archived tech
+  specs list it. Correction logged 2026-10-27 (earlier chat claim "no
+  external USB" was wrong twice over: port exists, and is exactly where
+  our stick was plugged). [V: apple.com/appletv/specs via archive 2008-12]
+- Apple-era SKUs: 40GB or 160GB drive, Wi-Fi draft-n (SKU details moot:
+  wired design). [V: same spec page]
 
 ### Unit B — aTVFlash/NitoTV mod (10.0.0.8)
 - Base OS: Apple TV OS 10.4.7, build 8N6014 = firmware 3.0.2 (last
@@ -86,6 +93,7 @@ ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 \
 | Unknown | Closed by |
 |---|---|
 | 32-bit EFI boot path (biggest risk) | first USB boot |
+| stock USB-boot openness (firmware-era lottery) | read unit A: Settings → Version on screen; AND the restore-layout stick (signed boot.efi chain) — our MBR+bootia32 stick can NEVER be blessed by stock EFI regardless of era: signature, not format, is the wall |
 | unit A NIC + GPU | same boot: `lspci -nn`, `ifconfig -a` |
 | SDVO/HDMI behavior | same boot: `dmesg \| grep -iE 'drm\|sdvo\|hdmi'` |
 | swrast speed at 1 GHz | first playback session |

@@ -89,7 +89,7 @@ stories behind entries: LOG.md.
 | Skin | `skin.atv` v0.1 (GPL-2.0-only, build-generated art) + `DEJAVU` fonts |
 | Image deps | `HOST_DOSFSTOOLS`, `HOST_MTOOLS`, `GENEXT2FS` + external.mk deps + build-script prebuild |
 | genimage | 9; MBR; P1 vfat 32M `-n ATV1BOOT` bootable (starts sector 1 — v9 doesn't align); P2 rootfs via `file`; P3 64M via `file` (formatted by post-image) |
-| Artifacts | MBR `atv1-disk.img` 609 MiB sha256 `1049f792948f4041e550e62b6e7bcc5bd87dc96e661a24bb495de5390b2ed597` (rootfs now LABEL=ATV1ROOT; verify ALL OK; chain …→bd35e7fa→1049f792) **and** restore-layout `atv1-recv-disk.img` 641 MiB sha256 `7d3c46810d48d6e5d55752aac6937716b4c59966d062e4f16c8eca56ce6d1135` (GPT: atvrecv 64Mi + root 512Mi + data 64Mi; GPT parsed by macOS gpt; P1 FAT mounted+read by macOS driver; boot.efi sha re-verified through mount) |
+| Artifacts | MBR `atv1-disk.img` 609 MiB sha256 `c3ca5b94ba08f7e1f58aac773bcadb29d66d8b95d94d5fc3effc6e98dd85d920` **and** restore-layout `atv1-recv-disk.img` 641 MiB sha256 `23b1e4afb5d24c1468b89e53c9a2215b219f2eac2a8e98bc4db098bafec5c2fa` — beacon2 build: rootfs has eth0 DHCP stanza + never-give-up beacon + initramfs early beacon; chain: …→bd35e7fa→1049f792→c3ca5b94 / 7d3c4681→23b1e4af |
 
 Standing rule: any defconfig/fragment edit → rerun `make atv1_defconfig`
 and grep the generated `.config` for the symbols you set. This era drops

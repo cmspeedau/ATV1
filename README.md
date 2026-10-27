@@ -143,7 +143,7 @@ diskutil unmountDisk /dev/diskN
 sudo dd if=~/ATV1/images/atv1-recv-disk.img of=/dev/rdiskN bs=4m   # Ctrl-T = progress
 sync
 sudo dd if=/dev/rdiskN bs=512 count=1312802 2>/dev/null | shasum -a 256
-# expect: 7d3c46810d48d6e5d55752aac6937716b4c59966d062e4f16c8eca56ce6d1135
+# expect: 23b1e4afb5d24c1468b89e53c9a2215b219f2eac2a8e98bc4db098bafec5c2fa
 ```
 
 Notes: the backup GPT sits at the image tail (~641 MiB), not the stick's
@@ -212,11 +212,15 @@ ssh -i ~/.ssh/atv1_fleet root@<atv1-ip>
 
 Serial console (57600 8N1): `login:` root, same password.
 
-**Boot beacon (headless discovery).** At boot the appliance waits for its
-DHCP lease, then shouts forever: gratuitous ARP + broadcast ping every
-60 s (`S60beacon`), a `kmsg` line (`ATV1 UP ip=... mac=...`) for serial,
-and Kodi JSON-RPC on `:8080`. So after any boot attempt, FROM THE
-COORDINATOR the box is findable without HDMI:
+**Boot beacon (headless discovery), two stages.** The INITRAMFS beacon
+fires first: as soon as the kernel + NIC + DHCP are alive — before any
+disk is touched — the unit grabs a lease and shouts gratuitous ARP +
+broadcast ping every 60 s forever (a `kmsg` line reads
+`ATV1 INITRAMFS-OK ip=...`). The ROOTFS beacon (S60beacon) takes the
+shout over after switch_root and adds Kodi JSON-RPC on `:8080`. So a
+MAC sighting proves the kernel lives even if handover fails, and the
+absence of any sighting after boot means the boot died pre-initramfs —
+the two failure classes are now distinguishable without serial:
 
 ```sh
 arp -a | grep -i "<unit-mac>"        # appears UNPROMPTED via gratuitous ARP

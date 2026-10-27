@@ -1,18 +1,55 @@
 #!/bin/sh
-# atv1 initramfs /init — resolve root= to a block device, mount, hand over.
+# atv1 initramfs /init — early beacon + root resolution + handover.
 #
 # Used ONLY by the restore-layout boot path (boot.efi -> mach_kernel with
 # this cpio embedded). The kernel cmdline arrives via com.apple.Boot.plist
 # "Kernel Flags": root=LABEL=ATV1ROOT rootwait console=ttyS0,57600
 #
-# Why an initramfs at all: the kernel cannot resolve root=LABEL= itself,
-# and device letters shift between a USB-stick boot (internal drive is
-# sda, stick lands on sdb) and an internal-disk boot (root IS sda).
-# Label lookup is the only device-independent answer.
+# WHY AN INITRAMFS: (1) the kernel cannot resolve root=LABEL= itself and
+# device letters shift between USB-stick boot (stick lands on sdb behind
+# the internal sda) and internal-disk boot (root is sda); (2) STAGE
+# TELEMETRY: this init shouts on the LAN before touching any disk, so a
+# gratuitous-ARP sighting of the unit's MAC proves "kernel + NIC + DHCP
+# alive" even if the root handover then fails. No sighting at all = the
+# boot died before initramfs (loader/kernel problem), not a config
+# problem. The rootfs beacon (S60beacon) takes the shout over after
+# switch_root; both never give up.
 #
 # /dev is devtmpfs, already mounted by the kernel (DEVTMPFS_MOUNT=y).
 PATH=/bin:/sbin
 
+# ---- background early beacon (never blocks the root hunt) ----
+(
+	IP=""
+	# eth0 appears when ioreg probes PCI (8139too built-in); give it 15 s
+	j=0
+	while [ "$j" -lt 15 ]; do
+		ifconfig eth0 >/dev/null 2>&1 && break
+		sleep 1
+		j=$((j + 1))
+	done
+	if ifconfig eth0 >/dev/null 2>&1; then
+		# raw lease (no default script in this cpio): udhcpc -n -q
+		# prints "ip=..." then exits on first ACK.
+		OUT=$(udhcpc -n -q -t 10 -T 2 -i eth0 2>/dev/null)
+		IP=$(echo "$OUT" | awk -F= '/^ip=/{print $2}')
+		GW=$(echo "$OUT" | awk -F= '/^router=/{print $2}')
+	fi
+	if [ -n "$IP" ]; then
+		ifconfig eth0 "$IP" netmask 255.255.255.0 up
+		[ -n "$GW" ] && route add default gw "$GW" 2>/dev/null
+		echo "ATV1 INITRAMFS-OK ip=$IP mac=$(ifconfig eth0 | awk '/HWaddr/{print $NF}')" > /dev/kmsg
+		while :; do
+			arping -A -c 1 "$IP" >/dev/null 2>&1
+			ping -c 1 -b "${IP%.*}.255" >/dev/null 2>&1
+			sleep 60
+		done
+	fi
+	# no lease: say so once on serial; the root hunt below still runs
+	echo "ATV1 initramfs: NO DHCP on eth0 (link? cable?)" > /dev/kmsg
+) >/dev/null 2>&1 &
+
+# ---- root resolution ----
 ROOT=""
 for a in $(cat /proc/cmdline); do
 	case "$a" in
@@ -50,7 +87,7 @@ done
 if [ -z "$DEV" ] || [ ! -b "$DEV" ]; then
 	echo "atv1-init: FATAL no block device for root=$ROOT after 60s"
 	ls -l /dev/sd* /dev/hd* 2>/dev/null
-	exec sh
+	exec sh   # serial shell; the beacon subshell keeps shouting if it had a lease
 fi
 
 echo "atv1-init: mounting $DEV ($ROOT)"

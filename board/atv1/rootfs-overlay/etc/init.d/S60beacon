@@ -18,16 +18,16 @@ case "$1" in
   start)
     (
       i=0; IP=""
-      while [ "$i" -lt 60 ]; do
+      # Wait FOREVER for the lease — a unit that boots must eventually be
+      # findable; a fixed timeout turns a slow network into false death
+      # (this exact bug silenced the first boot test, see LOG).
+      while :; do
         IP=$(ifconfig eth0 2>/dev/null | awk '/inet addr/{split($2,a,":");print a[2]}')
         [ -n "$IP" ] && break
-        sleep 2
         i=$((i + 1))
+        [ "$i" -eq 60 ] && echo "ATV1 beacon: still no IP after 120 s (link? DHCP server?)" > /dev/kmsg
+        sleep 2
       done
-      if [ -z "$IP" ]; then
-        echo "ATV1 beacon: eth0 got NO IP in 120 s (link? DHCP?)" > /dev/kmsg
-        exit 0
-      fi
       MAC=$(ifconfig eth0 | awk '/HWaddr/{print $NF}')
       echo "ATV1 UP ip=$IP mac=$MAC ssh=root frontrow jsonrpc=:8080" > /dev/kmsg
       while :; do

@@ -49,7 +49,8 @@ docker run --rm -v atv1-work:/work -v "$IMG:/export" -v "$ATV1:/atv1-src:ro" \
     [ -x "$T/bin/busybox" ] || { echo "target busybox missing"; exit 1; }
     rm -rf "$W"; mkdir -p "$W/bin" "$W/sbin" "$W/dev" "$W/proc" "$W/sys" \
         "$W/mnt" "$W/root" "$W/tmp"
-    for a in sh ash mount umount mkdir sleep cat blkid switch_root ls mknod; do
+    for a in sh ash mount umount mkdir sleep cat blkid switch_root ls mknod \
+             ifconfig udhcpc arping ping route; do
         ln -f "$T/bin/busybox" "$W/bin/$a"
     done
     cp /atv1-src/board/atv1/initramfs-init "$W/init"

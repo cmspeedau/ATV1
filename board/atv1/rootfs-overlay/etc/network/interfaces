@@ -1,0 +1,11 @@
+# /etc/network/interfaces — board overlay (buildroot skeleton ships
+# loopback ONLY; an eth0 stanza is integrator work — the omission cost
+# us a full boot-test cycle of silence, see LOG 2026-10-27).
+# The beacon (S60beacon) waits on THIS dhcp client; udhcpc backgrounded
+# by ifup keeps renewing forever.
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp

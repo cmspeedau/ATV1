@@ -411,3 +411,35 @@ Raw findings (expect scripts kept at
   raw dumps (any dd image) never open there; Disk Utility Restore
   would also rebuild the map and erase the atvrecv GUID — raw
   writers (dd/Etcher) are the only correct burn tools for this disk.
+
+## 2026-10-27 16:x — first restore-stick boot: logo→pink→silence; ROOT CAUSE = no DHCP stanza (mine)
+
+- Owner test (stick burned from 7d3c4681 — burn itself PROVEN good via
+  diskutil partition read, see above): grey Apple logo → PINK screen →
+  no network trace. Grey logo = recovery scan ate the stick and boot.efi
+  chainloaded mach_kernel: the entire boot-chain premise WORKS.
+- MY FALSE ALARM, retracted same hour: "kernel has no NIC driver" was
+  based on a head-truncated grep + a .ko find for a BUILT-IN driver;
+  CONFIG_8139TOO=y is in .config and baked in. Violated our own rule;
+  retraction logged so the claim can't haunt the tree.
+- REAL ROOT CAUSE (found in files, no hardware needed): the rootfs
+  /etc/network/interfaces was the buildroot skeleton = LOOPBACK ONLY.
+  eth0 was never configured → no lease → S60beacon's 120-s wait expired
+  → exit → total silence from a possibly-healthy box. The beacon was
+  unmissable by design and impossible to hear by omission. (The pink
+  screen may literally have been working Kodi.)
+- FIX (beacon2): (1) overlay interfaces gains `auto eth0 / dhcp`;
+  (2) S60beacon waits FOREVER (fixed timeout = false death);
+  (3) INITRAMFS beacon: background udhcpc(-n -q) + manual ifconfig +
+    gratuitous ARP loop BEFORE root handover → stage telemetry:
+    MAC seen + :8080 dead = stuck at initramfs; MAC seen + :8080 live =
+    fully booted; MAC absent = pre-initramfs death. Applets verified in
+    the built cpio by extraction on the host (16 links incl.
+    udhcpc/arping/ping/route/ifconfig).
+- Burn candidates (beacon2; supersede 1049f792 / 7d3c4681): MBR
+  c3ca5b94ba08f7e1f58aac773bcadb29d66d8b95d94d5fc3effc6e98dd85d920 and
+  GPT atv1-recv-disk.img 23b1e4afb5d24c1468b89e53c9a2215b219f2eac2a8e98bc4db098bafec5c2fa
+  (1,312,802 sectors; verify-image ALL OK incl. ATV1ROOT label).
+- Process lessons pinned: no `2>/dev/null` on forensic reads (twice);
+  standalone post-image needs rsync+O=/work/out+host PATH; read
+  fragments AND .config AND the shipped rootfs, not one of them.

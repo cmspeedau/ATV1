@@ -9,6 +9,7 @@ set -eu
 [ -f "$TARGET_DIR/etc/atv1/startkodi.sh" ] && chmod 0755 "$TARGET_DIR/etc/atv1/startkodi.sh"
 [ -f "$TARGET_DIR/etc/init.d/S20datadirs" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S20datadirs"
 [ -f "$TARGET_DIR/etc/init.d/S50kodi" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S50kodi"
+[ -f "$TARGET_DIR/etc/init.d/S60beacon" ] && chmod 0755 "$TARGET_DIR/etc/init.d/S60beacon"
 
 # ssh fleet pubkey (README §5): tighten perms regardless of how the
 # overlay was copied (dropbear refuses sloppy authorized_keys modes).

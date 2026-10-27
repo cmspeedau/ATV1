@@ -183,6 +183,20 @@ ssh -i ~/.ssh/atv1_fleet root@<atv1-ip>
 
 Serial console (57600 8N1): `login:` root, same password.
 
+**Boot beacon (headless discovery).** At boot the appliance waits for its
+DHCP lease, then shouts forever: gratuitous ARP + broadcast ping every
+60 s (`S60beacon`), a `kmsg` line (`ATV1 UP ip=... mac=...`) for serial,
+and Kodi JSON-RPC on `:8080`. So after any boot attempt, FROM THE
+COORDINATOR the box is findable without HDMI:
+
+```sh
+arp -a | grep -i "<unit-mac>"        # appears UNPROMPTED via gratuitous ARP
+curl -s http://<ip>:8080/jsonrpc -d '{"jsonrpc":"2.0","id":1,"method":"Application.GetProperties","params":["version"]}'
+```
+
+If neither ever shows after a boot attempt, the boot died before Linux —
+that's an EFI/boot-chain answer, not a config answer (see paths above).
+
 ## 6. Permanent install (internal drive)
 
 Standard 2.5" SATA; the image fits any drive. dd it, then grow P3 into

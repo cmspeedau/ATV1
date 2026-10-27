@@ -1,0 +1,54 @@
+#!/bin/sh
+# S60beacon — the network is the boot screen (README §5).
+#
+# Headless bring-up aid: wait for eth0's DHCP lease, then announce
+# forever so a unit with no working HDMI/serial still FINDS ITS COORDINATOR:
+#   - /dev/kmsg line: serial console (if fitted) reads "ATV1 UP ip=..."
+#   - gratuitous ARP + broadcast ping every 60 s: the unit's MAC/IP lands
+#     in ANY LAN host's ARP table unprompted — discovery without knowing
+#     the address (coordinator: arp -a | grep <unit-mac>)
+#   - Kodi's JSON-RPC webserver on :8080 (enabled via userdata
+#     guisettings.xml — Kodi 17 binds openly once enabled) answers probes.
+#
+# The LAN here is a documented /24; broadcast = first-three-octets + .255.
+
+PIDF=/var/run/atv1-beacon.pid
+
+case "$1" in
+  start)
+    (
+      i=0; IP=""
+      while [ "$i" -lt 60 ]; do
+        IP=$(ifconfig eth0 2>/dev/null | awk '/inet addr/{split($2,a,":");print a[2]}')
+        [ -n "$IP" ] && break
+        sleep 2
+        i=$((i + 1))
+      done
+      if [ -z "$IP" ]; then
+        echo "ATV1 beacon: eth0 got NO IP in 120 s (link? DHCP?)" > /dev/kmsg
+        exit 0
+      fi
+      MAC=$(ifconfig eth0 | awk '/HWaddr/{print $NF}')
+      echo "ATV1 UP ip=$IP mac=$MAC ssh=root frontrow jsonrpc=:8080" > /dev/kmsg
+      while :; do
+        arping -A -c 1 "$IP" >/dev/null 2>&1
+        ping -c 1 -b "${IP%.*}.255" >/dev/null 2>&1
+        sleep 60
+      done
+    ) >/dev/null 2>&1 &
+    echo $! > "$PIDF"
+    echo "ATV1 beacon armed (pid $(cat "$PIDF"))"
+    ;;
+  stop)
+    [ -f "$PIDF" ] && kill "$(cat "$PIDF")" 2>/dev/null
+    rm -f "$PIDF"
+    ;;
+  restart|reload)
+    "$0" stop; sleep 1; "$0" start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+exit 0

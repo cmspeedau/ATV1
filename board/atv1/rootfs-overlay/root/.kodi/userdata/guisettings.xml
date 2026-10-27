@@ -15,6 +15,13 @@
 	<section id="powermenu">
 		<setting id="powermenu.power.hddswitch">false</setting>
 	</section>
+	<!-- JSON-RPC webserver = headless probe + coordinator foothold
+	     (ids verified against this kodi.bin's strings, 2026-10-27;
+	     the localhost lockdown is Kodi 18+, 17 binds openly). -->
+	<section id="services">
+		<setting id="services.webserver">true</setting>
+		<setting id="services.webserverport">8080</setting>
+	</section>
 	<section id="input">
 		<setting id="input.enablemouse">false</setting>
 	</section>

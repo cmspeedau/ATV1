@@ -296,6 +296,25 @@ Raw findings (expect scripts kept at
   provenance tags. Serial console note: it now PROMPTS for the password
   (previously empty-shadow = no prompt).
 
+## 2026-10-27 (evening-2) — boot beacon: headless discovery wired in
+
+- Trigger: first-boot attempts on stock unit A show no HDMI and no LAN
+  presence (expected pre-boot-chip: stock EFI offers no USB path). While
+  the boot-chain question settles (ATV1sm ordering / drive-shackle
+  loader route), the image now finds itself whenever it CAN boot:
+  - `S60beacon` overlay init: waits for eth0 lease (120 s budget),
+    writes `ATV1 UP ip=... mac=...` to /dev/kmsg (serial sees it), then
+    gratuitous ARP + broadcast ping every 60 s — the unit lands in any
+    LAN host's ARP table unprompted, no IP preknowledge needed.
+  - Kodi JSON-RPC webserver enabled via guisettings: ids verified from
+    THIS kodi.bin's strings (`services.webserver`, `services.webserverport`
+    — not the Kodi 18 naming); localhost lockdown is 18+, 17 binds open.
+  - busybox 1.27.2 confirmed to ship arping+ping applets (build-side
+    `.config` audit — target binary won't exec on the host, don't).
+- Host-side discovery commands documented in README §5.
+- Rebuild pending → verify + re-pin (this supersedes ac2b1690… as burn
+  candidate).
+
 ## Current state / next
 
 - Burn candidate `ac2b1690…` (skin + ssh access + masked package-Kodi

@@ -443,3 +443,25 @@ Raw findings (expect scripts kept at
 - Process lessons pinned: no `2>/dev/null` on forensic reads (twice);
   standalone post-image needs rsync+O=/work/out+host PATH; read
   fragments AND .config AND the shipped rootfs, not one of them.
+
+## 2026-10-27 17:x — INCIDENT: restore image dd'd onto the wrong disk (owner's 2TB Passport)
+
+- The re-burn command named /dev/rdisk2 from a listing read ~an hour
+  earlier; between then and execution the USB disks renumbered (stick
+  30.8G -> disk4, Passport 2T -> disk2). 672 MB of atv1-recv-disk.img
+  landed at the HEAD of "My Passport 0827", destroying its primary GPT
+  and the first 672 MB of its first volume (EXT DATA). Proof: disk2 now
+  reports our builder fingerprint UUID 00000001-0000-5641-… on s1.
+  Cause: mine — violated the re-enumerate-before-every-dd rule myself.
+- Damage model: backup GPT at the 2 TB drive's END survived (dd covered
+  only the first 672 MB). `sudo gpt recover /dev/rdisk2` should restore
+  the map; Projects (HFS+ at ~1.9 TB) expected fully alive; EXT DATA
+  head structures gone — content beyond 672 MB intact, recovery via
+  DMDE/R-Studio class if needed. Passport parked until recovery.
+- RULE (pinned, non-negotiable): every dd block in chat/README lists
+  `diskutil list external` + a `diskutil info | grep "Disk Size"` guard
+  in the SAME paste as the dd; target size must match the media being
+  burned (30-ish GB for stick tests). Never carry a diskN across messages.
+- Consequence for the boot test: the STICK still holds the OLD mute
+  image (7d3c4681); the beacon2 image (23b1e4af) has never been on
+  hardware. Re-burn disk4 with the guard, then run the boot test.

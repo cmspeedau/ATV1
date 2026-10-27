@@ -530,3 +530,27 @@ Raw findings (expect scripts kept at
   kernel panics pre-init, panic=5 caught it — next suspect is generic
   early kernel. Identical frozen logo ⇒ efifb CLEARED; suspect moves to
   first-run generic early kernel / loader bp handoff.
+
+## 2026-10-27 19:1x — boot test 3: panic CYCLE observed (kernel finally executes) -> environment-sanitized burn
+
+- Owner saw grey logo -> black -> grey logo = panic + panic=5 reboot cycle.
+  First time the kernel RUNS on this hardware (payload fix proven live at
+  boot, not just in bytes). FB_EFI formally off suspect list (absent from
+  running image, content-proven bb70e9b4 burn).
+- Stick #3 extraction: still NO atv1-kmsg.txt. Two consistent worlds:
+  W1 = early panic <~10s (ACPI/e820/EFI handoff paths); W2 = kernel
+  reached /init but PCI layer dead (no /dev/sd* => save_console silent,
+  no NIC => no beacon, 60s root-hunt fails -> exec sh -> kill-init panic
+  -> cycle at ~65s). One dead PCI subsystem explains all three silences;
+  2007 EFI firmware + ACPI-driven probing is the classic landmine.
+  DISCRIMINATOR: cycle interval (asked owner: seconds vs ~minute).
+- Loader source audit: e820 converter = textbook (real desc size, sane
+  types, merge logic); bp memset+selective fill; initrd at
+  kernel_base+kernel_size, kernel above it, no self-overlap;
+  ramdisk_image/size 32-bit fields set. No smoking gun in source.
+- Burn #4 = flags-only change (mach_kernel byte-identical bb70e9b4):
+  acpi=off noapic noefi mem=256M added to Kernel Flags. If it boots ->
+  bisect one flag per burn to name the culprit. If it still cycles fast
+  -> W1 hardens: suspect loader bp handoff deeper (heap/end_of_kexec,
+  xloadflags, type_of_loader) + try early initcall audit.
+  Candidate: d8dfebabdb8cffb5fbd3bfa3cb83f49534f07e0be544ae95d876a2381b183cfa

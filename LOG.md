@@ -222,9 +222,36 @@ Raw findings (expect scripts kept at
   `/root/.kodi/userdata/{guisettings,sources,advancedsettings}.xml`.
   Skin present in the burned bytes, not just the staging dir.
 
+## 2026-10-27 (late) — dl/ durability: Release bundle + seed script
+
+- Motivation: the download cache — the thing that makes rebuilds work
+  at all — lived in exactly one place (the docker volume), and upstream
+  is already dead twice (the git:// overrides). "The internet still has
+  it" is not a reproducibility story.
+- Bundle: `atv1-dl.tar`, 459 MiB, 158 entries = `/work/dl` minus the
+  abandoned-kernel graveyard (4.14.335, 4.13.16, 4.12.14, 4.11.12,
+  4.10.17, 4.4.27, 4.9.8/30/45/65 ≈ 800 MB of dead attempts), incl.
+  both dead-upstream override files. sha256
+  `e555a313b36ce7936e09c0edce53dff7c5700b5ceab5a260e701a8f2fdcf328a`.
+  Volume itself untouched (bundle built read-only); staged at
+  `~/ATV1/images/atv1-dl.tar` (gitignored, as all artifacts).
+- Release asset, not git tree: GitHub hard-blocks >100 MB per file in
+  trees (linux-4.9.337 alone is 97 MB — borderline) and 459 MB would
+  bloat history forever; Releases = same repo, plain URL, 2 GB/file.
+  No LFS: clones without git-lfs silently get pointer files — the
+  buildroot hash gate would catch it, but the failure mode is ugly.
+- `tools/seed-dl.sh`: pinned sha256 gate + buildroot's own per-file
+  `.hash` gate = two independent checks, nothing passes silently.
+  README §3 rewritten around it; dead-override recipe kept as history.
+- PENDING HUMAN HANDS: create GitHub Release, tag `dl-2017.08.2`
+  (web UI — no gh CLI here), upload `~/ATV1/images/atv1-dl.tar`.
+  seed-dl.sh 404s until that upload exists.
+
 ## Current state / next
 
-- Skin image `396dce1b…` ready to burn. Next milestone: USB boot of
+- Skin image `396dce1b…` ready to burn. One one-time manual step
+  waiting above: upload `atv1-dl.tar` as Release `dl-2017.08.2`.
+  Next milestone: USB boot of
   unit A (README §5): answers the 32-bit EFI path, unit A NIC/GPU,
   SDVO behavior, and whether skin.atv renders on swrast at 1 GHz
   (`~/.kodi/temp/kodi.log` for skin errors). Then unit B run with

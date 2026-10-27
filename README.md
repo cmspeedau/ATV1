@@ -32,6 +32,7 @@ package/atv1-client/                      config hook for a prebuilt Rust binary
 tools/Dockerfile.build                    era build host (debian stretch: gcc6, py2)
 tools/container-build.sh                  the reproducible build script (§2)
 tools/verify-image.sh                     image byte-level checks (§4)
+tools/seed-dl.sh                          seed /work/dl from the Release bundle (§3)
 tools/build-client.sh                     out-of-era Rust cross-build vs era SDK
 client/                                   drop the built atv1-client binary here (untracked)
 ```
@@ -65,11 +66,30 @@ Before the FIRST build ever, seed the dead-download overrides (§3).
 Manual alternative (any stretch-era Linux): clone `2017.08.x`,
 `make O=out BR2_EXTERNAL=<tree> atv1_defconfig && make O=out`.
 
-## 3. dl/ overrides — required, two dead era downloads
+## 3. dl/ — the download cache outlives the upstreams
 
-Two selected packages fetch over retired `git://` endpoints; buildroot
-would hang with no error. Place both files in the download cache
-(`/work/dl` on a fresh volume) — the filenames ARE the version pins:
+Upstream sources rot (two already died: retired `git://` endpoints —
+buildroot would just hang). The durable copy lives in THIS repo as a
+Release asset, `atv1-dl.tar` (459 MiB, 158 tarballs incl. the two dead
+overrides, minus abandoned-kernel leftovers),
+`sha256 e555a313b36ce7936e09c0edce53dff7c5700b5ceab5a260e701a8f2fdcf328a`.
+Seed any fresh machine with it — the script verifies that sha, and
+buildroot independently verifies every `.hash` afterward:
+
+```sh
+tools/seed-dl.sh        # downloads (if missing), sha-checks, extracts to atv1-work:/work/dl
+```
+
+Regenerating the bundle after a config change (then update URL+sha in
+tools/seed-dl.sh and re-upload the Release asset):
+
+```sh
+docker run --rm -v atv1-work:/work:ro -v "$HOME/ATV1/images:/export" \
+  atv1-build:stretch sh -c 'cd /work && tar cf /export/atv1-dl.tar dl && sha256sum /export/atv1-dl.tar'
+```
+
+History of the two dead downloads (their files are IN the bundle —
+listed here because the filenames ARE the version pins):
 
 ```sh
 docker run --rm -v atv1-work:/work atv1-build:stretch sh -c '
@@ -82,6 +102,9 @@ docker run --rm -v atv1-work:/work atv1-build:stretch sh -c '
 
 Audited: no other selected package uses `git://`. These two had no
 `.hash` at the era (buildroot warns; the commit-SHA filenames are the pin).
+Licensing: the bundle is a redistribution of openly-licensed build
+sources (GPL et al.) — it feeds the build; it never enters any MIT
+binary we ship.
 
 ## 4. Verify the image (reads the bytes, not the log)
 

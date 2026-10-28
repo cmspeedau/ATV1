@@ -1118,3 +1118,23 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
      archive.org copies).
 - CRITICAL PATH UNCHANGED: CF enclosure parcel. All candidates above
   are post-boot experiments, not blockers.
+
+## 2026-10-28 — PATA-round driver preflight (from toolchain cache): ALL GREEN, no rebuild needed
+
+- Owner framing accepted: the project's docker toolchain cache IS the
+  needed driver archive - the provenance-pinned linux-4.9.337 tree and
+  .config live there; era-external driver hunts are unnecessary for our
+  side.
+- Preflight audit of /work/out/build/linux-4.9.337/.config for every
+  driver the internal-PATA boot + instruments depend on:
+  storage: ATA=y ATA_PIIX=y BLK_DEV_SD=y EXT4_FS=y JBD2=y
+  nic:     8139TOO=y  (the never-yet-proven suspect is definitively
+         BUILT IN - its silence is now firmware/IRQ-routing/debuggable-
+         live-shell territory, never a build gap)
+  record:  FAT_FS=y VFAT_FS=y NLS_UTF8=y NLS_DEFAULT=utf8
+  usb:     USB/EHCI/UHCI/USB_STORAGE all =y (boot-9 image keeps the
+         full debug surface for post-boot poking)
+  init:    BLK_DEV_INITRD/TMPFS/NET/PACKET/UNIX =y
+- Conclusion: the internal-PATA round has zero build-side risk. Every
+  remaining unknown is on-hardware behavior, readable post-boot from
+  atv1-kmsg.txt or a live shell.

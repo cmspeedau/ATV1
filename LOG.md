@@ -700,3 +700,23 @@ Raw findings (expect scripts kept at
   fresh copy + unique mountpoint; no stderr suppression on forensic
   dd/cmp; apostrophe-free inner single-quoted blocks; every candidate
   ships with content-proof (embedded-bytes compare) not timestamps.
+
+## 2026-10-28 — probe #A answered (USB CLEARED) -> probe #B: i8042_init blacklisted (SMM-emulated 8042 theory)
+
+- Probe #A (ba0a6634) burned byte-perfect, booted, 3-min test: FROZEN,
+  no beacon, no cycle. => USB initcall layer is NOT the pre-init hang.
+- Sharpened theory: 2007 Apple firmware's USB LEGACY EMULATION lives in
+  an SMM-driven *emulated 8042 controller* (firmware polls USB HID and
+  feeds i8042 registers). The kernel's i8042 controller test/reset/
+  handshake pokes the same emulated registers -> deadlock class identical
+  to the USB-SMM theory but EARLIER, which explains why probe #A changed
+  nothing. i8042_init verified: drivers/input/serio/i8042.c:1643
+  module_init(i8042_init), SERIO_I8042=y.
+- Blacklist ALGEBRA (cumulative is rigorous here): #A exonerated the
+  USB set; therefore if scream-cycle (~50s) appears WITH i8042_init
+  additionally blacklisted, the difference set convicts i8042 alone.
+  Frozen past 3 min => i8042 cleared; next: snd_hda_intel (firmware
+  boot-chime shares HDA), then ata_piix class.
+- Probe #B candidate 86b8c1c33f9c48a52ff0aaccba5e150e2abe04fcf558752d9ea4eea5bb222ae8
+  (flags-only; mach_kernel unchanged
+  8ff54bc3; only difference from #A = +i8042_init in blacklist).

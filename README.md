@@ -143,7 +143,7 @@ diskutil unmountDisk /dev/diskN
 sudo dd if=~/ATV1/images/atv1-recv-disk.img of=/dev/rdiskN bs=4m   # Ctrl-T = progress
 sync
 sudo dd if=/dev/rdiskN bs=512 count=1312802 2>/dev/null | shasum -a 256
-# expect: ba0a6634af7923d732becda848b53171f16a2352c4ca7d14684c96a40ae6163c
+# expect: 86b8c1c33f9c48a52ff0aaccba5e150e2abe04fcf558752d9ea4eea5bb222ae8
 ```
 
 Notes: the backup GPT sits at the image tail (~641 MiB), not the stick's

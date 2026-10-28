@@ -720,3 +720,29 @@ Raw findings (expect scripts kept at
 - Probe #B candidate 86b8c1c33f9c48a52ff0aaccba5e150e2abe04fcf558752d9ea4eea5bb222ae8
   (flags-only; mach_kernel unchanged
   8ff54bc3; only difference from #A = +i8042_init in blacklist).
+
+## 2026-10-28 — CONVICTION: i8042_init is the nine-boot hang (probe #B scream, 60-70 s period)
+
+- Probe #B (86b8c1c3): screen CYCLE with 60-70 s period = scream_reboot
+  path (init + 30 s hunt + sysrq b). init RAN. Combined with probe #A
+  (frozen with USB blacklisted): difference set = {i8042_init} => the
+  kernel's i8042 controller handshake against the firmware's
+  SMM-emulated 8042 (Apple USB legacy emulation) was THE pre-init
+  hang. First behavioral conviction of the project; kernel+init are
+  PROVEN ALIVE on unit A silicon via this loader path.
+- VICTORY-LAP boot #8 = 8443465b360ae668fce85f165a0fd3e1a79a0de5da83d035f79c6fe78be5b9a6
+  (flags-only; mach_kernel unchanged 8ff54bc3): USB six-name blacklist
+  REMOVED (root must enumerate to mount), blacklist now
+  i915_init,nouveau_drm_init,i8042_init. Everything else identical.
+  OUTCOME ALGEBRA (all branches readable):
+    ssh/beacon + no cycle      => full boot; GPU+i8042 remain the only
+                                  disabled subsystems (Kodi dark until
+                                  DRM debug from a live shell)
+    scream-cycle returns       => USB initcall side ALSO collides with
+                                  SMM (legacy emulation polls the HC);
+                                  pivot: un-blacklist uhci-only next,
+                                  and/or internal-IDE install path
+    frozen > 3 min             => new third class; re-probe from here
+- Permanent-fleet note (to resolve post-boot): the i8042 blacklist is
+  likely RIGHT for the whole fleet (same era firmware on unit B too);
+  revisit only for a real PS/2 need, which the hardware lacks.

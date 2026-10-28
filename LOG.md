@@ -1017,3 +1017,19 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
 - Repo HEAD is the whole truth: pins in README (expect 48e9f8d8),
   loader patches in tools/patches (payload-offset + GPL memmap quirk),
   standing rules, and every boot's burned-and-verified hashes above.
+
+## 2026-10-28 — Hardware path chosen: dual-slot CF->44-pin IDE enclosure (eBay US ~USD20)
+
+- Owner decision: buy the drive-form dual-slot CF->44-pin PATA 2.5"
+  adapter (Syba SD-ADA45006-equivalent) from eBay US; AU-local options
+  rejected (Desertcart errored; AU retail does not stock the part;
+  DirectNine/Amazon AU resellers are the same import at 2-5x).
+  Rationale over single-slot PCB: 2.5" screw-mount shell = zero
+  connector strain in the bay (fleet mechanical priority). Dual slot
+  electrical note: hosts see ONE card (slot priority) - spare slot is
+  contact insurance, not capacity.
+- Still required before burn: genuine CF Type I card 2-32GB (NOT CFast)
+  + CF->USB reader (Macs have no CF slot) + small Torx set.
+- microSD IDE-controller adapter remains the fallback lane if CF chain
+  sourcing stalls; burn/resume protocol unchanged either way
+  (48e9f8d8 image, discovery-first dd).

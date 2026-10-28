@@ -746,3 +746,25 @@ Raw findings (expect scripts kept at
 - Permanent-fleet note (to resolve post-boot): the i8042 blacklist is
   likely RIGHT for the whole fleet (same era firmware on unit B too);
   revisit only for a real PS/2 need, which the hardware lacks.
+
+## 2026-10-28 — external consolidated review received: lags current evidence; recommendations already in force
+
+- Review's knowledge horizon = LOG.md at boot-7 CANDIDATE DEFINITION
+  (line 628). It therefore misses four later hardware events recorded
+  here since: boot-7b (3-min frozen => map-hole fix alone did NOT
+  resolve), probe #A (USB initcalls cleared at 3 min), probe #B
+  (SCREAM CYCLE 60-70 s => i8042_init convicted by difference set),
+  and boot-#8 build 8443465b (USB restored, blacklist = GPU + i8042).
+- Its "best hypothesis" (ROM-shadow hole in the 256M@0 synthetic map)
+  is now PARTIALLY REFUTED by evidence: boot-7b ran the hole-free map
+  and still froze; the hole was real but not the hang. The convicted
+  mechanism (SMM-emulated i8042 handshake) was listed by the review
+  only as one of several unranked "PCI/USB/initcall + loader handoff"
+  directions. No repo action from the review.
+- All five of its recommended practices are ALREADY the standing rules
+  logged tonight (re-enumerate+size-gate every dd; candidate-specific
+  fresh extractions; inventory-guided device triage; one-variable
+  initcall probes with verified names; build-content proof gates +
+  loader *.o clean). Its udhcpc-callback proposal was integrated
+  earlier (with the awk/cut applet rejection — review's snapshot
+  pre-dates that correction too).

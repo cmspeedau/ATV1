@@ -676,3 +676,27 @@ Raw findings (expect scripts kept at
   ALGEBRA: cycle@~50s (+beacon race 15-25s) => init runs => USB initcall
   layer convicted. Frozen past 3 min => USB cleared too; next layer =
   ata_piix/PCI-probing class, same method.
+
+## 2026-10-28 — STATE: probe #A delivered, awaiting burn+boot (nothing pending in repo)
+
+- Probe #A candidate ba0a6634af7923d732becda848b53171f16a2352c4ca7d14684c96a40ae6163c
+  built, image-internal FAT flag-verified, README expect-line re-pinned,
+  pushed (00add83). NOT yet burned or booted as of this entry — no
+  result claimed.
+- Burn+boot protocol handed to owner: self-discovering gate block
+  (find 30.8 GB disk at exec time, size-gate <100 GB, dd, readback
+  1312802 sectors), then POWER ON + 3 FULL MINUTES EYES ON CLOCK.
+  This probe CANNOT boot rootfs by design (root is USB, blacklisted):
+  its success signal is BEACON ~15-25 s and/or SCREAM-CYCLE ~50 s
+  (= init runs = USB initcall layer convicted -> pivot to internal-IDE
+  install path). Frozen past 3 min = USB cleared -> probe #B targets
+  ata_piix-class initcalls (names to be verified in-tree first).
+- Housekeeping: stale ARP watcher from boot-7b round cancelled by owner
+  (expected; that boot's datum already recorded). Fresh watcher arms at
+  "hash pasted + powering on".
+- Standing rules reaffirmed tonight, all in force: verified applet
+  names + verified initcall names before they enter a script/cmdline;
+  size-gated self-discovering dd everywhere; hdiutil reads = detach +
+  fresh copy + unique mountpoint; no stderr suppression on forensic
+  dd/cmp; apostrophe-free inner single-quoted blocks; every candidate
+  ships with content-proof (embedded-bytes compare) not timestamps.

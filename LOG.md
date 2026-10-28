@@ -905,3 +905,45 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
 - If boot-10 dead-ends: the internal-PATA install inherits a loader with
   the era map fix - every prior PATA plan stands, log target = internal
   P1, NIC debug happens over ssh once beacon proves NIC, else pull drive.
+
+## 2026-10-28 — BOOT #10 verdict: EHCI-only ALSO blind -> STICK PATH DEAD on unit A firmware -> PIVOT: internal PATA install
+
+- Boot-10 (b264eaf9) burned byte-perfect + post-boot identity verified
+  (stick plist flags exact, mach_kernel 395796b7/7899116B). Result:
+  scream 60-70s, NO atv1-kmsg.txt, NO kodi log, no beacon (watcher full
+  window). Extraction of P1 verified clean (64 MiB read, hdiutil mount).
+- USB REGIME ALGEBRA NOW EXHAUSTIVE:
+    all-USB up        (boot-8)  -> no enumeration
+    EHCI-only         (boot-10) -> no enumeration
+    UHCI-only                   -> unwinnable by physics (USB-2 stick on
+                                   companion transceiver requires EHCI to
+                                   release the port; EHCI absent = port
+                                   stays firmware-owned)
+    USB blacklisted   (probe A) -> no storage BY DESIGN
+  => stick path formally DEAD on unit A stock fw3. Firmware keeps the
+  boot port after boot.efi exits; no in-Linux driver regime claims it.
+  Era community DID boot USB on this firmware (atv-bootloader issues) -
+  remaining unknowns are era-kernel config deltas we cannot chase
+  blindly; every additional probe is a burn with unknown odds, while the
+  internal path is the PRODUCT END-STATE anyway.
+- NIC (8139too): still never observed across EVERY world (acpi=off
+  noapic PIC routing unproven). Becomes debuggable from a live internal
+  boot instead of deduced.
+- PIVOT DECIDED (pre-authorized direction since boot-8 analysis):
+  INSTALL TARGET = internal 2.5" PATA drive, burn via IDE/PATA->USB
+  adapter, restore-layout image unchanged (boot.efi recovery scan reads
+  internal disk natively - Apple's own restore path does this).
+  BURN IMAGE = boot-9 build 48e9f8d846388ce7a2297cddc077fedf0624caa0328e266b60b92d7e0ed16570
+  (chosen over boot-10: UHCI/OHCI drivers REGISTERED = maximal live-
+  shell debug surface for USB re-binding experiments later; both boot
+  identical from PATA since ata_piix does the mounting).
+  LOADER STATE PROVEN for this path: real map + era quirk boots to init
+  (boot-9/10 screams PROVE kernel+init alive on correct map); i8042+GPU
+  blacklist stands.
+- PATA ROUND INSTRUMENTS: success look = grey logo, NO cycle (GPU off =
+  dark by design). Watch ARP beacon (NIC's last unproven chance); if
+  silent after ~3 min: power off, pull drive, read internal P1 FAT via
+  adapter -> atv1-kmsg.txt (full dmesg incl. ata_piix + 8149too + USB
+  probe attempts) + atv1-kodi.log. Burn protocol = manual diskutil-list
+  confirmation (adapter disk size unknown; NO heuristic dd; Passport is
+  NOT a target under any circumstances).

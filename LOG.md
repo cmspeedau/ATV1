@@ -1033,3 +1033,31 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
 - microSD IDE-controller adapter remains the fallback lane if CF chain
   sourcing stalls; burn/resume protocol unchanged either way
   (48e9f8d8 image, discovery-first dd).
+
+## 2026-10-28 — OWNER CORRECTION: the boot-test unit is the MODDED BOARD (log's "stock" label was wrong)
+
+- Owner correction received tonight: the unit used for boots 1-10 (the
+  burn/beat testbed, MAC 00:23:32:33:fc:21) is the MODDED board, not the
+  stock one as labeled throughout this log ("unit A = stock fw3" was
+  incorrect; fw3 itself stands). Historical entries are left as-written;
+  this entry supersedes the unit labeling wherever they conflict.
+- Consequences for evidence standing (stated honestly):
+  1) ALL hardware convictions tonight - i8042 hang conviction, era map
+     quirk confirmation, USB-port-ownership failure, NIC silence - are
+     PROVEN ON THE MODDED BOARD. They remain the working ground truth
+     for the unit being revived, but generalization to truly-stock
+     fleet units is now UNPROVEN, not assumed.
+  2) The second unit (the truly stock one; the frontrow-era ssh host at
+     10.0.0.8 relationship to be re-confirmed with owner) becomes the
+     later fleet-baseline test: same burned CF card, same instruments.
+     If it behaves differently, the delta is mod-attributable and that
+     is exactly the experiment that tells us.
+  3) Purchasing dual CF enclosures (one per unit) is now doubly
+     justified: the fleet plan needs the internal-bay path on both, and
+     the A/B comparison needs both boards live.
+- OPEN QUESTION TO OWNER (blocks only the fleet-baseline claim, not the
+  current bring-up): what exactly does the mod change? (drive bay/CF
+  mods, firmware/JTAG-era boot mods, RAM, or previously-installed
+  Linux?) The answer determines which behaviors might be mod-side
+  effects - e.g., whether the USB-ownership failure could partly be a
+  mod artifact instead of pure stock firmware law.

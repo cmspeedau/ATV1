@@ -872,3 +872,36 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
     frozen >3min => new class; re-probe from here.
 - Watcher re-arms on "hash pasted + booting". Boot-8 remains last BOOTED
   candidate; boot-9 is build+proof only until owner burns.
+
+## 2026-10-28 — BOOT #9 verdict: era map quirk CONFIRMED (no fast panic; init on real map) + map EXONERATED for USB -> BOOT #10 EHCI-only probe
+
+- Boot-9 (48e9f8d8) burned byte-perfect, booted: SCREAM CYCLE 60-70s,
+  no beacon (watcher window silent), stick log absent. READS:
+  1) MILESTONE: the fast-panic signature (boots 3/4, ~5-10s) is GONE.
+     The atv-bootloader RT-overlap quirk makes the REAL firmware map
+     bootable on unit A. Synthetic exactmap crutch RETIRED permanently.
+     The era's documented firmware bug was real and it was ours.
+  2) Map formally EXONERATED for the USB failure: with the corrected map,
+     USB drivers loaded, init running - stick STILL never enumerates
+     (scream = block layer empty; ext4 root would have mounted any sd*).
+  3) NIC still never observed (8139too unproven across ALL worlds).
+- BOOT #10 = b264eaf95eecfa7668572fc3594937b511b5955b57b1544c9a745daa640a98cd
+  (flags-only vs boot-9; mach_kernel UNCHANGED 395796b7, re-verified).
+  Era-classic USB-2-only boot: + uhci_hcd_init, ohci_hcd_mod_init,
+  ohci_pci_init blacklisted (verified in-tree names); usb_init +
+  ehci_hcd_init + ehci_pci_init stay restored; i8042+GPU stay off.
+  ALGEBRA:
+    beacon/ssh/FULL BOOT      => stick enumerates on EHCI when UHCI
+                                  companions stay dormant => WIN, make
+                                  permanent + revisit GPU.
+    scream 60-70s AND log now appears on stick => enumeration FIXED,
+                                  root-hunt failure is a different bug
+                                  (label/fs) => readable from the log.
+    scream 60-70s, no log     => EHCI-only also blind => STICK PATH DEAD
+                                  on this firmware => internal-PATA
+                                  install (product end-state; loader now
+                                  proven-good on real map for it).
+    fast panic / frozen       => new signal, re-probe.
+- If boot-10 dead-ends: the internal-PATA install inherits a loader with
+  the era map fix - every prior PATA plan stands, log target = internal
+  P1, NIC debug happens over ssh once beacon proves NIC, else pull drive.

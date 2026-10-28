@@ -38,7 +38,9 @@ save_console() {
 	mkdir -p /boot1
 	mount -t vfat "$DEV_F" /boot1 2>/dev/null || return 0
 	{
-		echo "=== atv1 initramfs console dump (up=$(/bin/sh -c 'cut -d. -f1 /proc/uptime')) ==="
+		U="?"
+		read UP _ < /proc/uptime 2>/dev/null && U="${UP%%.*}"
+		echo "=== atv1 initramfs console dump (up=${U}s) ==="
 		dmesg
 		echo "--- /proc/partitions ---"; cat /proc/partitions
 		echo "--- /sys/block ---";      ls /sys/block 2>/dev/null
@@ -70,16 +72,26 @@ scream_reboot() {
 		j=$((j + 1))
 	done
 	if ifconfig eth0 >/dev/null 2>&1; then
-		# raw lease (no default script in this cpio): udhcpc -n -q
-		# prints "ip=..." then exits on first ACK.
-		OUT=$(udhcpc -n -q -t 10 -T 2 -i eth0 2>/dev/null)
-		IP=$(echo "$OUT" | awk -F= '/^ip=/{print $2}')
-		GW=$(echo "$OUT" | awk -F= '/^router=/{print $2}')
+		# BusyBox udhcpc delivers leases to its -s event script via env
+		# (interface/ip/subnet/router); stdout carries NOTHING we can
+		# rely on, and this cpio has no default.script — configure via
+		# the packed hook, then read the result back. Token parsing only:
+		# this busybox has NO awk/cut applets (verified from the binary
+		# — an applet-name grep would have silently returned empty).
+		udhcpc -n -q -t 10 -T 2 -i eth0 -s /bin/udhcpc.script >/dev/null 2>&1
+		IP=""
+		for t in $(ifconfig eth0 2>/dev/null); do
+			case "$t" in addr:*) IP="${t#addr:}" ;; esac
+		done
 	fi
 	if [ -n "$IP" ]; then
-		ifconfig eth0 "$IP" netmask 255.255.255.0 up
-		[ -n "$GW" ] && route add default gw "$GW" 2>/dev/null
-		echo "ATV1 INITRAMFS-OK ip=$IP mac=$(ifconfig eth0 | awk '/HWaddr/{print $NF}')" > /dev/kmsg
+		MAC=""
+		PHN=0
+		for t in $(ifconfig eth0); do
+			if [ "$PHN" = 1 ]; then MAC="$t"; break; fi
+			[ "$t" = "HWaddr" ] && PHN=1
+		done
+		echo "ATV1 INITRAMFS-OK ip=$IP mac=$MAC" > /dev/kmsg
 		while :; do
 			arping -A -c 1 "$IP" >/dev/null 2>&1
 			ping -c 1 -b "${IP%.*}.255" >/dev/null 2>&1

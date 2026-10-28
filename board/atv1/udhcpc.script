@@ -1,0 +1,27 @@
+#!/bin/sh
+# Minimal BusyBox udhcpc event hook for the restore-path initramfs.
+# Packed explicitly by tools/make-atvrecv-disk.sh — no Buildroot
+# /usr/share/udhcpc/default.script exists inside this tiny cpio, and
+# BusyBox udhcpc makes NO promise about lease details on stdout: the
+# env-var event contract (interface/ip/subnet/router) is the ONLY
+# supported channel. (Adopted from an external review; applet use
+# restricted to what this busybox build actually contains — see the
+# awk/cut trap noted in LOG.md.)
+
+case "${1:-}" in
+    bound|renew)
+        [ -n "${ip:-}" ] || exit 1
+        ifconfig "$interface" "$ip" netmask "${subnet:-255.255.255.0}" up || exit 1
+        if [ -n "${router:-}" ]; then
+            # BusyBox may provide a space-separated router list; the
+            # first gateway is all this appliance LAN needs.
+            set -- $router
+            route add default gw "$1" dev "$interface" 2>/dev/null ||
+                route add default gw "$1" 2>/dev/null || true
+        fi
+        ;;
+    deconfig)
+        ifconfig "${interface:-eth0}" 0.0.0.0 down 2>/dev/null || true
+        ;;
+esac
+exit 0

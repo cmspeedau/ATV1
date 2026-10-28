@@ -53,7 +53,12 @@ docker run --rm -v atv1-work:/work -v "$IMG:/export" -v "$ATV1:/atv1-src:ro" \
              ifconfig udhcpc arping ping route dmesg sync; do
         ln -f "$T/bin/busybox" "$W/bin/$a"
     done
+    # NOTE: do NOT add awk/cut links - this busybox build has neither
+    # applet (verified via strings on the binary). Scripts must stay
+    # POSIX-ash-only. See LOG.md 2026-10-28.
     cp /atv1-src/board/atv1/initramfs-init "$W/init"
+    cp /atv1-src/board/atv1/udhcpc.script "$W/bin/udhcpc.script"
+    chmod 0755 "$W/bin/udhcpc.script"
     "$H/bin/python" /atv1-src/tools/mkcpio-newc.py - "$W" | gzip -9n > /export/atv1-initrd.cpio.gz
     cp /work/out/images/bzImage /export/bzImage
     ls -l /export/atv1-initrd.cpio.gz /export/bzImage'

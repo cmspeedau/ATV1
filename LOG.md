@@ -626,3 +626,34 @@ Raw findings (expect scripts kept at
 - Candidate: 9e5ca4972eab316a34030eaed148a6a3484c2fb7d7ef26c29cd9ce0d13b05539
   (mach_kernel 4eb7be8a NEW — initrd changed as intended; FAT flags
   image-internal verified).
+
+## 2026-10-28 — external review integrated: udhcpc EVENT-SCRIPT fix, and the awk/cut trap the review walked into
+
+- External review (claud) of boot failures + udhcpc change, cross-checked
+  against instruments:
+  * CORRECT and adopted: initramfs beacon parsed udhcpc STDOUT for
+    ip=/router= text. BusyBox's contract is the -s EVENT SCRIPT (env:
+    interface/ip/subnet/router); stdout is no promise, and this cpio
+    ships no default.script => the old beacon could hold a real lease
+    and still report nothing. New board/atv1/udhcpc.script (bound/
+    renew/deconfig) packed into initrd, wired via -s. Telemetry-only:
+    cannot cause/mask the pre-init question.
+  * REJECTED after binary check: review's make-script adds awk+cut
+    applet links and its scripts USE awk/cut. strings on the era
+    busybox: awk=0 cut=0 — the applets are NOT in this build; the
+    links would be dead and the beacon would silently eval empty
+    even on a working DHCP. (My own boot-7 beacon had the same awk
+    dependency — also fixed.) Rule: initramfs scripts are POSIX-ash
+    + verified-applet-ONLY (sh ash mount umount mkdir sleep cat blkid
+    switch_root ls mknod ifconfig udhcpc arping ping route dmesg
+    sync). IP/MAC now parsed by shell token loops.
+  * Build-note trap logged: an apostrophe inside the docker single-
+    quoted sh -c string broke stage 1 parsing — build scripts must
+    avoid apostrophes inside inner single-quoted blocks.
+- Boot-7b candidate 090e3c5e96f6d83973e8fbd10c5b83174d836876debdcd31390f9134eed464c3
+  (mach_kernel 8ff54bc3; initrd content-verified: udhcpc.script PRESENT,
+  awk/cut links 0, beacon uses -s, scream_reboot intact; FAT flags ==
+  boot-7 exactly: exactmap 640K@0+255M@1M, nomodeset, blacklist).
+  boot-7 proper (9e5ca497) never burned: 7b supersedes it (same
+  discriminator + working telemetry; boot-7 outcome unknowable but
+  moot).

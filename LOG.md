@@ -1079,3 +1079,42 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
   (already taught), then stock unit as fleet control. Behavioral deltas
   (i8042 hang, USB port ownership, NIC silence) are then attributed
   mod-vs-stock with evidence, not assumption.
+
+## 2026-10-28 — ATV1 firmware-archive research (owner pointed at felixbruns.de): that site is ATV2+ only, but the real ATV1 archive lineage is now recorded
+
+- felixbruns.de/iPod/firmware (owner-suggested): CHECKED in full. Its
+  Apple TV table covers ATV 2 / 3 / 4 .ipsw only - NO Apple TV 1
+  entries (ATV1 predates ipsw packaging; its updates were mesu DMGs).
+  Dead end for us, but negative-space documented so nobody rechecks.
+- WORKING ARCHIVE LINEAGE for ATV1 firmware (all firmware eras 1.0 ->
+  3.0.2 obtainable):
+  1) appledb.dev/device/AppleTV1,1.html - full per-version firmware DB
+     with download links (mesu-hosted DMGs, same family as our pinned
+     97623d8d.../2Z694-6013-013 source; mesu confirmed live today).
+  2) archive.org/details/os-dot-dmg-1.0 - original fw 1.0 DMG preserved
+     off-Apple (long-tail insurance if mesu ever dies).
+  3) Community downgrade ecosystem (TinkerDifferent how-to, 2023 video):
+     established fw-downgrade path exists (2.3.1 jailbreak -> ssh ->
+     spoofed "update" DMG rename). Noted, NOT scheduled.
+- 2026 corroboration found alongside: tommycoolman.com atv-osx-installer
+  (Apr 2026) - a USB-stick installer that boots an UNMODIFIED stock
+  ATV1 and writes OS X to internal. Independent, current proof that the
+  stock recovery-scan USB BOOT path works on unmodified boards - our
+  whole restore-layout design, confirmed by a third party in 2026.
+  Also logs a GMA950 HDMI-capture quirk to keep in mind for Kodi-era
+  display debugging.
+- WHY THIS MATTERS (candidates recorded, none scheduled):
+  1) boot.efi VERSION SWAP: each firmware DMG contains its own
+     boot.efi. Ours is pinned fw3-era (c7f57cc2...). fw1.x/2.x
+     boot.efi may emit different memory maps and handoff behavior -
+     a cheap, single-variable, DEVICE-SIDE experiment (swap one file
+     on P1, keep our mach_kernel) that could probe the USB-ownership
+     failure from the firmware side. Rule unchanged: boot.efi stays
+     device-side only, never committed.
+  2) Firmware downgrade on a spare/modded board (fw2.2-era SMM
+     behavior vs fw3) - heavier, optional, only if boot.efi swap
+     shows signal.
+  3) Factory-fallback redundancy for the stock unit (mesu still live +
+     archive.org copies).
+- CRITICAL PATH UNCHANGED: CF enclosure parcel. All candidates above
+  are post-boot experiments, not blockers.

@@ -989,3 +989,31 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
 - Five-second-delay provenance note: the review did not reopen the
   era thread; WE did (fetched davilla issue #4 verbatim into the
   reference-research entry) - provenance is primary, not LOG telephone.
+
+## 2026-10-28 — STATE: boot-10 fully closed; PATA round armed and awaiting hardware (owner shopping)
+
+- Boot-10 ARP watcher closed its 11-min window: NO beacon. That
+  completes boot-10's witness set (screen clock: scream 60-70s; stick:
+  verified-clean P1 extraction with no kmsg/kodi files; network: silent
+  watcher). Verdict unchanged and recorded: EHCI-only blind, stick path
+  dead, PIVOT to internal PATA. No open questions on boot-10.
+- NIC note for the PATA round: 8139too now unproven across NINE
+  no-beacon watcher windows; the PATA boot's atv1-kmsg.txt on internal
+  P1 is the designated instrument that finally shows its probe result
+  (and ata_piix + USB attempts) without needing it to work.
+- OWNER STATUS: acquiring burn hardware (2.5" 44-pin PATA->USB adapter,
+  small Torx set, optional IDE->CF/SD adapter). Nothing to do in repo
+  meanwhile.
+- RESUME PROTOCOL (when adapter arrives):
+  1. stick unplugged, drive on bridge -> owner pastes
+     `diskutil list external` (discovery ONLY, no heuristics).
+  2. assistant returns exact /dev/rdiskN dd of images/atv1-recv-disk.img
+     (= boot-9 build, sha 48e9f8d846388ce7a2297cddc077fedf0624caa0328e266b60b92d7e0ed16570,
+     1312802 sectors readback) + readback verify.
+  3. reinstall, power on, watch clock (no-cycle = boot) + ARP watcher;
+     3-min silence -> pull drive, read internal P1 for atv1-kmsg.txt +
+     atv1-kodi.log -> full first-boot Linux diary decides GPU/NIC next
+     steps from evidence, not deduction.
+- Repo HEAD is the whole truth: pins in README (expect 48e9f8d8),
+  loader patches in tools/patches (payload-offset + GPL memmap quirk),
+  standing rules, and every boot's burned-and-verified hashes above.

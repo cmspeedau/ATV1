@@ -947,3 +947,45 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
   probe attempts) + atv1-kodi.log. Burn protocol = manual diskutil-list
   confirmation (adapter disk size unknown; NO heuristic dd; Passport is
   NOT a target under any circumstances).
+
+## 2026-10-28 — external review #2 (changes.md, horizon=560faf8) reconciled: chronology endorsed; misses boot-10 result + PATA pivot; one kexec nuance ADOPTED
+
+- Review's knowledge horizon = commit 560faf8 (has boot-9 verdict, knows
+  boot-10 was PLAN not result). Misses exactly TWO events since: boot-10
+  hardware outcome (scream 60-70s, no log, no beacon; EHCI-only blind)
+  and the recorded PIVOT to internal-PATA install (b143aa5), which is
+  the live work state.
+- Its chronology audit ENDORSES our core record: i8042 conviction by
+  difference set; boot-9 dual verdict (era overlap quirk confirmed for
+  fast-panic; map exonerated for USB); boot-7-vs-7b distinction; the
+  correction that "map poison" was too broad a claim for boots 3-6;
+  udhcpc -s contract; verified-applet rule. No corrections demanded.
+- Ledger hygiene catch ACCEPTED and closed here: boot-8 (8443465b) had a
+  definition entry but no dedicated RESULT entry at review time; its
+  hardware outcome (burned byte-perfect, scream 60-70s, no beacon, no
+  stick log - owner-reported live) now stands explicitly in the USB
+  regime table of the boot-10 pivot entry (boot-8 -> no enumeration).
+- NEW NUANCE ADOPTED from its research: era USB-boot evidence (archived
+  Kodi/Ubuntu guide) ran via atv-bootloader + KEXEC into a second
+  kernel. Plausibly the era never cold-booted Linux-to-USB either; the
+  kexec'd kernel inherits a firmware that was already handed off by
+  kernel #1. This further supports the stick-path-dead verdict AND
+  explains the era USB-working reports without contradicting them.
+  Recorded, no action (product path = internal PATA anyway).
+- Its "add companion drivers built-in" recommendation was already
+  tested and refuted by boot-8 (UHCI/OHCI/ehci ALL =y built-in and
+  running => still blind); boot-10 then tested the opposite regime.
+  Both regimes now evidenced; the companion-built-in idea is NOT a
+  live candidate.
+- Its "verify generated .config after fragment" = existing standing
+  rule (established when the DRM-selects-FB trap was found; applet and
+  initcall name-verification extensions logged previously).
+- Its i8042.nopnp caution is correct and moot: we use full
+  initcall_blacklist of i8042_init (complete disable), not nopnp.
+- Its instrumentation wishlist (PCI IDs, EHCI init messages, root-hub
+  registration on boot-10) is exactly the internal-PATA instrument
+  plan already in force: those fields land in atv1-kmsg.txt written to
+  internal P1, readable off the drive without any network.
+- Five-second-delay provenance note: the review did not reopen the
+  era thread; WE did (fetched davilla issue #4 verbatim into the
+  reference-research entry) - provenance is primary, not LOG telephone.

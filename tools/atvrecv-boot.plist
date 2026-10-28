@@ -9,6 +9,6 @@
     <key>Kernel</key>
     <string>mach_kernel</string>
     <key>Kernel Flags</key>
-    <string>root=LABEL=ATV1ROOT rootwait console=ttyS0,57600 panic=5 panic_on_oops=1 acpi=off noapic noefi memmap=exactmap memmap=640K@0 memmap=255M@1M nomodeset initcall_blacklist=i915_init,nouveau_drm_init,i8042_init</string>
+    <string>root=LABEL=ATV1ROOT rootwait console=ttyS0,57600 panic=5 panic_on_oops=1 acpi=off noapic noefi nomodeset initcall_blacklist=i915_init,nouveau_drm_init,i8042_init</string>
 </dict>
 </plist>

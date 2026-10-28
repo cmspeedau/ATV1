@@ -840,3 +840,35 @@ Raw findings (expect scripts kept at
   (era: +5s needed for HDDs) - our 30 s hunt window is adequate, keep it.
 
 No image built this round; boot-8 (8443465b) remains the last burned candidate.
+
+## 2026-10-28 — BOOT #9 built: REAL EFI map + atv-bootloader overlap quirk (loader change, content-proven)
+
+- LOADER CHANGE (first non-flags candidate since the payload fix):
+  atv1_memmap_quirk.c ports davilla's quirk_fixup_efi_memmap() - RT_CODE/
+  RT_DATA union computed from the LIVE firmware map, every RAM-typed
+  descriptor overlapping it TRIMMED (never split; zero-page descriptors
+  now skipped at e820 conversion). Era hard-split at 0x025AE000 NOT
+  ported (layout-specific to their image; rationale logged). GPL-2.0
+  attribution header on patch file + source; firewall rule restated:
+  patch and mach_kernel stay GPL/device-side, never enter MIT app code.
+- FLAGS CHANGE (paired, single experiment = "real map done right"):
+  memmap=exactmap memmap=640K@0 memmap=255M@1M REMOVED. All else identical
+  to boot-8: blacklist i915_init,nouveau_drm_init,i8042_init; acpi=off
+  noapic noefi panic=5 rootwait root=LABEL=ATV1ROOT nomodeset console.
+- CANDIDATE 48e9f8d846388ce7a2297cddc077fedf0624caa0328e266b60b92d7e0ed16570
+  (1312802 sect). mach_kernel NOW 395796b766a82b69 / 7899116 B - changed,
+  as it must; content-proofs: 3 ATV1-QUIRK strings present in built
+  mach_kernel (linked, not stale-object), quirk .o timestamp inside this
+  build, image FAT plist verified post-build with ZERO memmap occurrences.
+- BOOT-9 ALGEBRA (instruments: screen clock + ARP watcher + stick log):
+    beacon/ssh/stick-log => real-map+quirk path WORKS; USB ownership
+      theory confirmed; next: re-enable GPU debugging from live shell.
+    fast cycle ~5-10s (boots 3/4 signature) => map still kills pre-init
+      even quirked => overlap-quirk hypothesis REFUTED for our fw3;
+      synthetic map returns, internal-PATA becomes next step.
+    scream ~60-70s no log => kernel+init fine on real map, stick STILL
+      invisible => map exonerated for USB specifically => EHCI-only probe
+      or internal-PATA (owner's call, as before).
+    frozen >3min => new class; re-probe from here.
+- Watcher re-arms on "hash pasted + booting". Boot-8 remains last BOOTED
+  candidate; boot-9 is build+proof only until owner burns.

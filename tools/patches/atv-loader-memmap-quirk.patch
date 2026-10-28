@@ -1,0 +1,217 @@
+# atv-loader-memmap-quirk.patch
+# License: GPL-2.0-or-later (DERIVED from davilla/atv-bootloader
+#   linux_code.c quirk_fixup_efi_memmap(), itself GPL-2.0). This patch and
+#   its build products apply ONLY to the GPL-2.0 atv-linux-loader and the
+#   device-side mach_kernel. It must NEVER be merged into MIT-licensed
+#   ATV1 app code or binaries. See LOG.md 2026-10-28 reference research.
+#
+diff --git a/Makefile b/Makefile
+index 88a656b..f2cd9f2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -38,7 +38,7 @@ endif
+ 
+ CFLAGS := -Wall -Werror -nostdlib -fno-stack-protector -fno-builtin -O0 -std=gnu11 --target=$(TARGET) -Iinclude $(DEFINES)
+ 
+-OBJS := start.o atvlib.o baselibc_string.o cons.o tinyprintf.o debug.o linux.o e820.o
++OBJS := start.o atvlib.o baselibc_string.o cons.o tinyprintf.o debug.o linux.o e820.o atv1_memmap_quirk.o
+ 
+ all: kernel_bin.h initramfs_bin.h mach_kernel
+ 
+diff --git a/atv1_memmap_quirk.c b/atv1_memmap_quirk.c
+new file mode 100644
+index 0000000..a19bbd6
+--- /dev/null
++++ b/atv1_memmap_quirk.c
+@@ -0,0 +1,105 @@
++/*
++ * Copyright (C) 2008 Scott D. Davilla (atv-bootloader, GPL-2.0)
++ *               2026 ATV1 project (port to atv-linux-loader)
++ * PURPOSE: Apple TV (1st gen) EFI memory-map overlap quirk for the Linux
++ *          handoff. Derived from quirk_fixup_efi_memmap() in atv-bootloader
++ *          linux_code.c (github.com/davilla/atv-bootloader).
++ *
++ * Original note (2007-11-26, davilla): the Apple TV EFI firmware's memory
++ * map declares RuntimeServices Code/Data segments that overlap segments
++ * marked free. If Linux claims those pages, live firmware is overwritten
++ * and the result is "unknown crashes/hangs when running linux". On the
++ * 2007 firmware that includes the SMM-based USB/8042 legacy emulation
++ * which owns the boot USB port, so a trampled RT region plausibly breaks
++ * the handoff of that port to Linux as well.
++ *
++ * This port: compute the union [bgn,end) of all RuntimeServices
++ * Code/Data descriptors, then trim every RAM-typed descriptor that
++ * overlaps the union so the kernel is never offered firmware-owned
++ * pages. Trimming (never splitting) is used because there is no safe
++ * room to insert new descriptors into the firmware-allocated map.
++ * The era loader's second fixup - a hard split at 0x025AE000 tied to its
++ * own Mach-O image layout - is deliberately NOT ported.
++ *
++ * SPDX-License-Identifier: GPL-2.0-or-later
++ */
++
++#include <linux.h>
++
++static int atv1_type_is_ram(uint32_t efi_type)
++{
++    switch (efi_type)
++    {
++        case EFI_BOOT_SERVICES_CODE:
++        case EFI_BOOT_SERVICES_DATA:
++        case EFI_CONVENTIONAL_MEMORY:
++        case EFI_LOADER_CODE:
++        case EFI_LOADER_DATA:
++            return 1;
++        default:
++            return 0;
++    }
++}
++
++void atv1_efi_map_overlap_quirk(efi_memory_desc_t *efi_map,
++                                uint32_t efi_map_size,
++                                uint32_t efi_desc_size)
++{
++    efi_memory_desc_t *p;
++    uint32_t n = efi_map_size / efi_desc_size;
++    uint64_t rt_bgn = ~0ULL, rt_end = 0, bgn, end;
++    int i;
++
++    // Pass 1: union of all RuntimeServices Code/Data segments.
++    for (i = 0, p = efi_map; i < (int) n; i++, p = next_memdesc(p, efi_desc_size))
++    {
++        if (p->type == EFI_RUNTIME_SERVICES_CODE ||
++            p->type == EFI_RUNTIME_SERVICES_DATA)
++        {
++            if (p->phys_addr < rt_bgn)
++                rt_bgn = p->phys_addr;
++            end = p->phys_addr + (p->num_pages << EFI_PAGE_SHIFT);
++            if (end > rt_end)
++                rt_end = end;
++        }
++    }
++
++    if (rt_bgn >= rt_end)
++    {
++        trace("ATV1-QUIRK: no runtime-services segments in firmware map\n");
++        return;
++    }
++
++    trace("ATV1-QUIRK: runtime union [0x%X-0x%X)\n",
++          (uint32_t) rt_bgn, (uint32_t) rt_end);
++
++    // Pass 2: trim RAM-typed descriptors that overlap the protected range.
++    for (i = 0, p = efi_map; i < (int) n; i++, p = next_memdesc(p, efi_desc_size))
++    {
++        if (!atv1_type_is_ram(p->type))
++            continue;
++
++        bgn = p->phys_addr;
++        end = bgn + (p->num_pages << EFI_PAGE_SHIFT);
++
++        if (end <= rt_bgn || bgn >= rt_end)
++            continue; // no overlap
++
++        trace("ATV1-QUIRK: trimming RAM [0x%X-0x%X)\n",
++              (uint32_t) bgn, (uint32_t) end);
++
++        if (bgn >= rt_bgn)
++        {
++            // Starts inside the protected range: keep whatever is above it.
++            p->phys_addr = rt_end;
++            p->num_pages = (end > rt_end) ? ((end - rt_end) >> EFI_PAGE_SHIFT) : 0;
++        }
++        else
++        {
++            // Starts below the range: truncate its end at the range start.
++            // A full-cover descriptor keeps only its below-part; RAM above
++            // the union is dropped rather than split (no map room).
++            p->num_pages = (rt_bgn - bgn) >> EFI_PAGE_SHIFT;
++        }
++    }
++}
+diff --git a/e820.c b/e820.c
+index 061eb69..fbc1c22 100644
+--- a/e820.c
++++ b/e820.c
+@@ -80,11 +80,14 @@ uint8_t efi_to_e820_map(efi_memory_desc_t *efi_map,
+ 
+     for (int i = 0; i < efi_num_entries; i++)
+     {
+-        e820_add_memory_region(output_map,
+-                               &bios_num_entries,
+-                               efi_map->phys_addr,
+-                               (efi_map->num_pages << EFI_PAGE_SHIFT),
+-                               efi_convert_to_e820_type(efi_map->type));
++        // ATV1-FIX: the overlap quirk (atv1_memmap_quirk.c) may trim a
++        // descriptor to zero pages; never emit zero-size e820 entries.
++        if (efi_map->num_pages != 0)
++            e820_add_memory_region(output_map,
++                                   &bios_num_entries,
++                                   efi_map->phys_addr,
++                                   (efi_map->num_pages << EFI_PAGE_SHIFT),
++                                   efi_convert_to_e820_type(efi_map->type));
+ 
+         efi_map = next_memdesc(efi_map, efi_desc_size);
+     }
+diff --git a/linux.c b/linux.c
+index edd8cae..243663f 100644
+--- a/linux.c
++++ b/linux.c
+@@ -23,6 +23,12 @@ unsigned int    initramfs_bin_len = 0;
+ // Video parameters
+ extern linear_framebuffer_t fb;
+ 
++// ATV1-FIX: Apple TV firmware map overlap quirk (atv1_memmap_quirk.c, GPL-2.0,
++// ported from davilla/atv-bootloader). See that file for the rationale.
++void atv1_efi_map_overlap_quirk(efi_memory_desc_t *efi_map,
++                                uint32_t efi_map_size,
++                                uint32_t efi_desc_size);
++
+ #define ROUND_UP(num, multiple) (num + (multiple - 1)) & ~(multiple - 1)
+ 
+ static void *get_rsdp_from_systbl(efi_system_table_32_t *systbl)
+@@ -81,8 +87,18 @@ noreturn void load_linux(void)
+ 
+     trace("Found valid Linux kernel.\n");
+ 
+-    // Find actual length of the kernel
+-    uint32_t real_kernel_len = kernel_bin_len - ((kernel_bin[0x1f1] + 1) * 512);
++    // Find actual length of the kernel.
++    // ATV1-FIX: the payload can start AFTER (setup_sects+1)*512 when the image
++    // carries an EFI stub section (our buildroot 4.9 CONFIG_EFI=y kernel has
++    // payload_offset = 128). Legacy arithmetic lands inside the stub and the
++    // kernel triple-faults on entry. Honour setup_header payload_offset
++    // (+0x57); it is 0 for stub-less kernels so legacy images still work.
++    uint32_t payload_start = (kernel_bin[0x1f1] + 1) * 512;
++    uint32_t payload_off_field = 0;
++    memcpy(&payload_off_field, kernel_bin + 0x1f1 + 0x57, 4);
++    payload_start += payload_off_field;
++
++    uint32_t real_kernel_len = kernel_bin_len - payload_start;
+ 
+     // Determine where a safe place in memory to copy the kernel to is
+     uint32_t kernel_loadaddr = ROUND_UP(gBA->kernel_base + gBA->kernel_size + initramfs_bin_len,
+@@ -90,7 +106,7 @@ noreturn void load_linux(void)
+ 
+     // Copy kernel to the correct address
+     trace("Copying kernel to 0x%X...", kernel_loadaddr);
+-    memcpy((void *) kernel_loadaddr, &kernel_bin[(kernel_bin[0x1f1] + 1) * 512], real_kernel_len);
++    memcpy((void *) kernel_loadaddr, &kernel_bin[payload_start], real_kernel_len);
+     dprintf("done.\n");
+ 
+     // Zero the boot parameters
+@@ -162,6 +178,14 @@ noreturn void load_linux(void)
+     copy_smbios_to_lowmem((efi_system_table_32_t *) gBA->efi_sys_tbl);
+ 
+     // Setup E820
++    // ATV1-FIX: trim the runtime-services/free overlap this firmware's map is
++    // known to contain BEFORE conversion; otherwise the kernel is handed
++    // firmware-owned pages (documented cause of era "crashes/hangs", and the
++    // standing candidate for our USB-ownership failure).
++    atv1_efi_map_overlap_quirk((efi_memory_desc_t *) gBA->efi_mem_map_ptr,
++                               gBA->efi_mem_map_size,
++                               gBA->efi_mem_desc_size);
++
+     bp.e820_entries = efi_to_e820_map((efi_memory_desc_t *) gBA->efi_mem_map_ptr,
+                                       gBA->efi_mem_map_size,
+                                       gBA->efi_mem_desc_size,

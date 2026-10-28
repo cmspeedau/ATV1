@@ -1061,3 +1061,21 @@ No image built this round; boot-8 (8443465b) remains the last burned candidate.
   Linux?) The answer determines which behaviors might be mod-side
   effects - e.g., whether the USB-ownership failure could partly be a
   mod artifact instead of pure stock firmware law.
+
+## 2026-10-28 — Resolved open question: the 10.0.0.8 frontrow-ssh host is the STOCK unit
+
+- Owner confirmed: stock board = the unit still running Apple's
+  frontrow-era OS, ssh-able at 10.0.0.8 (legacy kex). Modded board =
+  boot-testbed (boots 1-10, MAC fc:21). Fleet unit map now unambiguous.
+- Consequence noted for the CF round ahead: when the stock unit gets
+  its CF enclosure, its internal 40 GB HDD (the fleet's last known-good
+  Apple OS install) comes out. Not a preservation emergency: the
+  frontrow-era restore image is re-obtainable from Apple's mesu
+  (still live as of today - our boot.efi pin 97623d8d... came from it),
+  so the stock unit can be returned to factory state at will. An
+  off-drive image of the HDD is OPTIONAL, only worth doing if a PATA
+  bridge passes through the bench anyway.
+- A/B baseline plan stands: same burned CF card, modded board first
+  (already taught), then stock unit as fleet control. Behavioral deltas
+  (i8042 hang, USB port ownership, NIC silence) are then attributed
+  mod-vs-stock with evidence, not assumption.

@@ -768,3 +768,75 @@ Raw findings (expect scripts kept at
   loader *.o clean). Its udhcpc-callback proposal was integrated
   earlier (with the awk/cut applet rejection — review's snapshot
   pre-dates that correction too).
+
+## 2026-10-28 — Community EFI reference research (owner request): references EXIST; one documented ATV1 firmware bug we have never applied; new top hypothesis
+
+### References found (all public, all verified online today)
+1. davilla/atv-bootloader (GitHub mirror of code.google.com/p/atv-bootloader, GPL-2.0,
+   Mar 2008, Scott Davilla; lineage: Edgar "gimli" Hucek mach_linux_boot -> James
+   McKenzie mb_boot_tv -> atv-bootloader). SAME TRICK AS OURS: embeds kernel+initrd
+   in a Mach-O "mach_kernel" that boot.efi loads. Files that matter to us:
+   - linux_code.c :: quirk_fixup_efi_memmap(), dated note 2007-11-26: "The appletv
+     efi firmware has a bug that effects linux kernel when booting from efi. Three
+     EFI RunTime Services Code/Data segments overlap a declared free memory
+     segment. This can cause code/data overwrites and result in unknown
+     crashes/hangs when running linux." Their fix: trim the free segment that
+     overlaps RT_CODE/RT_DATA, plus a hard split of the segment containing
+     0x025AE000 (rationale unclear - possibly self-layout-specific; port with care).
+   - linux_code.c :: fill_e820map(): actual-EFI-map -> E820 converter (same
+     textbook algorithm our loader e820.c carries).
+   - boot_loader.c header: a REAL captured ATV1 EFI memmap (mem00..mem09, RAM top
+     0x10000000, mach_kernel loads 0x02000000) + notes incl. "PCI: BIOS Bug: MCFG
+     area at f0000000 is not E820-reserved".
+   - README: "some installers ... assuming a video bios (it's hiding in the AppleTV),
+     these will hang and do bad things" - era corroboration of our legacy-probe
+     hang class; they used vesafb off the boot.efi linear framebuffer, no VGA BIOS.
+   - Issue #4 (filed 2008, era): USB devices DO enumerate under Linux on this
+     hardware (pen drives immediately; USB hard drives needed a +5s rcS delay
+     before scanning /proc/partitions). => stick-invisible-to-Linux is NOT a
+     firmware law - era kernels (2.6.24-ish) booted USB roots on fw-current ATVs.
+     Era corpus: penubuntu/XBMC-Live USB boots, kexec-style second-stage patterns.
+2. DistroHopper39B/ATV1sm (2025): replaces the Mach-O inside Apple Service
+   Diagnostics (ASD.acm/Contents/MacOS/ASD - executed UNsigned by the signed ASD
+   path, offsets figured by Rairii/Wack0) to gain code execution WITH EFI BOOT
+   SERVICES, then hooks LoadImage/StartImage/UnloadImage/Exit (OpenCore-derived)
+   to lift the EFI signature lock. Result: rEFInd "works perfectly", GRUB2/
+   NetBSD-10.1 boot+install+run (incl. from USB), GopShimDxe adds GOP video.
+   Fleet-risk notes logged: (a) Apple IA32-EFI memory-map bug can SOFT-BRICK
+   (NVRAM) on some OS loads - their protocol is a PRAM reset (CMOS battery out +
+   cmd-opt-p-r); (b) Alpine via ATV1sm sees 194 MB RAM vs 212 MB via boot.efi
+   path; (c) author calls it non-reference quality; (d) requires a mediafire-hosted
+   ASD disk image - supply-chain hazard for a fleet; do not adopt casually.
+3. CSMWrap/SeaBIOS: DEAD on ATV1 by their own test - firmware lacks the PCI I/O
+   protocol -> VGA arbitration broken. Confirms only two EFI paths exist on this
+   machine: boot.efi-payload (our path) or the ATV1sm boot-services bypass.
+4. Era docs for the install path: Kodi wiki "Archive:HOW-TO:Install Gentoo and
+   XBMC on Apple TV 1" (internal PATA install procedure, credits atv-bootloader),
+   ReactOS wiki Apple TV (1st gen) page, xbmc-boxee-iview archive wiki (Ubuntu 9.10).
+
+### Synthesis -> NEW TOP HYPOTHESIS (explains two unrelated-looking failures)
+- The community-documented firmware map bug is an OVERLAP: RT_CODE/RT_DATA segments
+  (firmware code+data, low in the first 256 MB) alias into a segment declared free.
+- Our CURRENT synthetic map (memmap=exactmap 640K@0 + 255M@1M) declares the ENTIRE
+  first 256 MB as RAM - INCLUDING those firmware RT/SMM/ACPI-NVS regions. Linux
+  early allocator therefore reuses live firmware code/data pages.
+- Consequences chain: (1) when firmware SMM legacy-emulation code later runs (the
+  i8042 poll! the USB handoff!), its own data structures have been trampled ->
+  deadlock class we convicted in i8042, AND boot-8 USB ownership failure (firmware
+  still holding the port, its state corrupted) -> possibly the SAME root cause.
+  (2) Boots #3/#4 fast-panicked with the real map passed UNQUORKED - exactly the
+  crash davilla fixed with the overlap trim. We skipped their fix and went
+  synthetic; synthetic traded a crash for firmware corruption.
+- Correct era path, per reference: ACTUAL EFI map + overlap quirk fixup -> e820.
+  NEVER TRIED BY US. Candidate boot #9 (after owner go): loader-side port of
+  quirk_fixup_efi_memmap into work-loader (GPL->GPL, patch lives in
+  tools/patches/, binary stays device-side per license firewall), drop all memmap=
+  flags, keep blacklist i915_init,nouveau_drm_init,i8042_init.
+- Effect on path decision: internal-PATA stays the product end-state and the
+  strategic recommendation; but the claim "firmware never hands USB to Linux" is
+  REFUTED by era evidence, so the real-map+quirk boot is now ranked ABOVE the
+  EHCI-only lottery ticket as the next stick-path experiment.
+- Also adopted as standing knowledge: USB enumeration can be SLOW on this box
+  (era: +5s needed for HDDs) - our 30 s hunt window is adequate, keep it.
+
+No image built this round; boot-8 (8443465b) remains the last burned candidate.

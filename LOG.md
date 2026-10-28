@@ -657,3 +657,22 @@ Raw findings (expect scripts kept at
   boot-7 proper (9e5ca497) never burned: 7b supersedes it (same
   discriminator + working telemetry; boot-7 outcome unknowable but
   moot).
+
+## 2026-10-28 — boot-7b = pre-init hang CONFIRMED (3-min test) -> probe #A: USB initcalls blacklisted
+
+- 7b burned byte-perfect (090e3c5e verified), boot result: grey logo
+  FROZEN; 3-minute powered test: still frozen, NO scream cycle, no log,
+  no beacon. With corrected synthetic map + GPU off + acpi/noapic/noefi:
+  death is BEFORE /init and is a HANG, not a fault (panic=5 silent).
+- Cleared by counterfactual: paging-state theory (boots #3/#4 ran the
+  timer path under boot.efi's paging state -> head_32 survives it).
+- Front suspect: 2007 Intel USB legacy/SMM emulation colliding with
+  Linux HCD reset (system-wide deadlock, no fault, frozen logo — era
+  classic; ICH6-era firmware + UHCI/EHCI built-ins).
+- PROBE #A = ba0a6634af7923d732becda848b53171f16a2352c4ca7d14684c96a40ae6163c
+  (flags-only; mach_kernel UNCHANGED 8ff54bc3). All USB initcalls, names
+  VERIFIED in-tree (lesson applied): usb_init (subsys), uhci_hcd_init,
+  ehci_hcd_init, ehci_pci_init, ohci_hcd_mod_init, ohci_pci_init.
+  ALGEBRA: cycle@~50s (+beacon race 15-25s) => init runs => USB initcall
+  layer convicted. Frozen past 3 min => USB cleared too; next layer =
+  ata_piix/PCI-probing class, same method.
